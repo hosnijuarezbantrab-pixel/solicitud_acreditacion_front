@@ -1,0 +1,127 @@
+.banner {
+    background: var(--white);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+    padding: 20px 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 35px;
+    position: relative;
+    overflow: hidden;
+    animation: fsi .3s ease;
+}
+
+.banner::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--teal), var(--teal-lt));
+}
+
+@keyframes fsi {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.av {
+    width: 120px;
+    height: 120px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0, 191, 165, .35);
+}
+
+.avPic {
+    object-fit: cover;
+    background: var(--gray-100);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 2px solid var(--white);
+}
+
+.info {
+    flex: 1;
+}
+
+.nombre {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+}
+
+.code {
+    font-size: .7rem;
+    color: var(--gray-400);
+    font-weight: 500;
+}
+
+.chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.metrics {
+    display: flex;
+    gap: 22px;
+    flex-shrink: 0;
+}
+
+.met {
+    text-align: right;
+}
+
+.mv {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.mv.tl {
+    color: var(--teal-dk);
+}
+
+.mv.gd {
+    color: var(--gold-dk);
+}
+
+.ml {
+    font-size: .58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--gray-400);
+    margin-top: 2px;
+}
+
+.sep {
+    width: 1px;
+    background: var(--gray-200);
+    margin: 4px 0;
+}
+
+@media(max-width:900px) {
+    .metrics {
+        display: none;
+    }
+}

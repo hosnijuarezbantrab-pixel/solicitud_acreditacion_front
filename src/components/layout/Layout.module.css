@@ -1,0 +1,36 @@
+.shell{display:flex;flex-direction:column;min-height:100vh;}
+.body{display:flex;flex:1;}
+.content{flex:1;padding:32px 36px;overflow-x:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 32px;height:var(--topbar-h);position:sticky;top:0;z-index:100;background:rgba(255,255,255,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,191,165,.1);}
+.brand{display:inline-flex;align-items:center;gap:7px;background:var(--white);border:1px solid var(--gray-200);border-radius:20px;padding:5px 14px;font-size:.6rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.07);white-space:nowrap;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px rgba(16,185,129,.25);flex-shrink:0;}
+.tnav{display:flex;gap:3px;}
+.tlink{padding:7px 16px;border-radius:20px;font-size:.71rem;font-weight:600;color:var(--gray-500);cursor:pointer;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px;}
+.tlink:hover{color:var(--navy);background:rgba(0,0,0,.04);}
+.tact{background:var(--teal);color:#fff!important;box-shadow:0 3px 10px rgba(0,191,165,.35);}
+.tbadge{background:var(--pink);color:#fff;font-size:.55rem;padding:1px 5px;border-radius:8px;font-weight:800;}
+.uchip{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:20px;border:1px solid var(--gray-200);background:var(--white);cursor:pointer;}
+.uav{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-dk) 100%);display:flex;align-items:center;justify-content:center;font-size:.64rem;font-weight:800;color:#fff;}
+.uname{font-size:.71rem;font-weight:700;color:var(--navy);line-height:1.2;}
+.urole{font-size:.6rem;color:var(--gray-400);}
+.sidebar{width:var(--sidebar-w);min-height:calc(100vh - var(--topbar-h));padding:22px 12px;display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.sec{font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:1.2px;padding:14px 10px 6px;}
+.nitem{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;font-size:.73rem;font-weight:500;color:var(--gray-500);cursor:pointer;transition:all .15s;text-decoration:none;user-select:none;}
+.nitem:hover{background:rgba(255,255,255,.75);color:var(--navy);}
+.nact{background:var(--white);color:var(--teal-dk)!important;font-weight:700;box-shadow:var(--card-shadow);}
+.nico{font-size:1.05rem;width:20px;text-align:center;flex-shrink:0;}
+.nlbl{flex:1;}
+.nbadge{background:var(--pink);color:#fff;font-size:.58rem;padding:1px 7px;border-radius:10px;font-weight:700;}
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;background:rgba(255,255,255,.75);backdrop-filter:blur(10px);border-top:1px solid rgba(0,0,0,.05);}
+.scode{font-family:monospace;font-size:.64rem;color:var(--gray-400);}
+.sright{display:flex;align-items:center;gap:10px;font-size:.64rem;color:var(--gray-400);}
+.rpill{display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--gray-200);border-radius:20px;padding:4px 12px;font-size:.6rem;font-weight:700;letter-spacing:.8px;color:var(--gray-600);}
+.rdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px rgba(16,185,129,.2);}
+.toasts{position:fixed;bottom:60px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:14px;font-size:.78rem;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.15);animation:tSlide .25s ease;pointer-events:all;}
+@keyframes tSlide{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+.t-success{background:#065f46;color:#d1fae5;}
+.t-error{background:#991b1b;color:#fee2e2;}
+.t-warning{background:#92400e;color:#fef3c7;}
+.t-info{background:var(--teal-dk);color:var(--teal-pale);}
+@media(max-width:900px){.sidebar{display:none;}.tnav{display:none;}.content{padding:20px 16px;}}

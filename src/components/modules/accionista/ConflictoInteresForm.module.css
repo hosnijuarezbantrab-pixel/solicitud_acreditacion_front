@@ -1,0 +1,5 @@
+.sec{background:var(--white);border-radius:16px;border:1px solid var(--gray-200);box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:14px;overflow:hidden;}
+.swRow{display:flex;align-items:center;gap:12px;padding:14px 20px;}
+.swLbl{font-size:.78rem;font-weight:600;color:var(--navy);}
+.swSub{font-size:.65rem;color:var(--gray-400);margin-top:2px;}
+.swBody{padding:16px 20px;background:rgba(0,191,165,.03);}
