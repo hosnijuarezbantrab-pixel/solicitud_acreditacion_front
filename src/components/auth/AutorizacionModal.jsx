@@ -43,18 +43,19 @@ const TIPO_META = {
 
 export default function AutorizacionModal({ tipo, onClose, onAutorizado }) {
   const [usuario, setUsuario] = useState('');
-  const [clave,   setClave]   = useState('');
+  const [clave, setClave] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
   const ref = useRef(null);
   useEffect(() => { ref.current?.focus(); }, []);
 
   const meta = TIPO_META[tipo] || { ico: '🔐', c: 'amber', desc: tipo };
 
+
   async function submit(e) {
     e?.preventDefault();
     if (!usuario.trim()) { setError('Debe ingresar el usuario supervisor.'); return; }
-    if (!clave.trim())   { setError('Debe ingresar la contraseña.'); return; }
+    if (!clave.trim()) { setError('Debe ingresar la contraseña.'); return; }
     setLoading(true); setError('');
     try {
       const res = await validarSupervisor({ usuario: usuario.trim(), clave });

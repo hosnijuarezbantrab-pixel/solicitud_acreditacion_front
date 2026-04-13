@@ -439,37 +439,6 @@ export default function ParticipacionForm({ acc }) {
         Está disponible para reportería operativa y control interno del área de Capitalización.
       </Alert>
 
-      {/* Selector multiselección de asamblea */}
-      {asambleas.length > 1 && (
-        <div className={s.asmSelector}>
-          <label className={s.asmLabel}>Aplica para las siguientes asambleas (Selección múltiple)</label>
-          <div className={s.asmBtns} style={{ flexWrap: 'wrap' }}>
-            {asambleas.map(a => {
-              const on = asmIds.includes(a.id);
-              return (
-                <button
-                  key={a.id}
-                  type="button"
-                  className={[s.asmBtn, on ? s.asmBtnOn : ''].join(' ')}
-                  onClick={() => {
-                    if (on) {
-                      if (asmIds.length > 1) setAsmIds(asmIds.filter(id => id !== a.id));
-                    } else {
-                      setAsmIds([...asmIds, a.id]);
-                    }
-                  }}
-                >
-                  <span className={[s.asmPillSm, a.tipo === 'O' ? s.pOrd : s.pExt].join(' ')}>
-                    {a.descripcion}
-                  </span>
-                  {a.num} — {a.ordinal}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <div className={s.sections}>
         <SeccionLimitacion acc={acc} asmIds={asmIds} />
         <hr className={s.hr} />
