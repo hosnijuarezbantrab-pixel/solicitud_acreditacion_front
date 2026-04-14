@@ -54,6 +54,154 @@
   color: var(--gray-300);
 }
 
+/* ── Panel Desplegable (Solo Lectura) ───────────────────── */
+.collapsible {
+  border: 1.5px solid var(--gray-100);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 4px;
+  transition: border-color .2s;
+}
+
+.collapsibleOpen {
+  border-color: rgba(13, 27, 42, .18);
+}
+
+.collapsibleHdr {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(13, 27, 42, .03) 0%, rgba(13, 27, 42, .01) 100%);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font);
+  transition: background .15s;
+}
+
+.collapsibleHdr:hover {
+  background: linear-gradient(135deg, rgba(13, 27, 42, .06) 0%, rgba(13, 27, 42, .03) 100%);
+}
+
+.collapsibleIco {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.collapsibleTitle {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: .2px;
+}
+
+.collapsibleSummary {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--gray-400);
+  font-family: monospace;
+  letter-spacing: .5px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-100);
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.collapsibleLockBadge {
+  margin-left: auto;
+  font-size: .55rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(13, 27, 42, .06);
+  color: var(--navy);
+  border: 1px solid rgba(13, 27, 42, .14);
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.collapsibleChevron {
+  font-size: .9rem;
+  color: var(--gray-400);
+  transition: transform .22s cubic-bezier(.34, 1.56, .64, 1);
+  line-height: 1;
+  margin-left: 6px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.chevronUp {
+  transform: rotate(-180deg);
+}
+
+.collapsibleEditable {
+  border-color: rgba(0, 191, 165, .2);
+}
+
+.collapsibleEditable.collapsibleOpen {
+  border-color: rgba(0, 191, 165, .35);
+}
+
+.collapsibleEditable .collapsibleHdr {
+  background: linear-gradient(135deg, rgba(0, 191, 165, .05) 0%, rgba(0, 191, 165, .02) 100%);
+}
+
+.collapsibleEditable .collapsibleHdr:hover {
+  background: linear-gradient(135deg, rgba(0, 191, 165, .1) 0%, rgba(0, 191, 165, .05) 100%);
+}
+
+.collapsibleTitleEditable {
+  color: var(--teal-dk);
+}
+
+.collapsibleEditBadge {
+  margin-left: auto;
+  font-size: .55rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(0, 191, 165, .1);
+  color: var(--teal-dk);
+  border: 1px solid rgba(0, 191, 165, .3);
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.collapsibleBody {
+  border-top: 1.5px solid var(--gray-100);
+}
+
+.collapsibleSubtitle {
+  font-size: .6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--gray-400);
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--gray-100);
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.collapsibleInner {
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 /* ── Aviso de sección editable ─────────────────────────── */
 .editNotice {
   display: flex;

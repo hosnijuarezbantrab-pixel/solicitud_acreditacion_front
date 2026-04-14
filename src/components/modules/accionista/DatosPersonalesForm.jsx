@@ -18,10 +18,42 @@ function ReadOnlyField({ label, value, mono }) {
     <div className={s.roField}>
       <div className={s.roLabel}>
         {label}
-        <span className={s.roBadge}>Sistema Central</span>
       </div>
       <div className={[s.roValue, mono ? s.roMono : ''].join(' ')}>
         {value || <span className={s.roEmpty}>—</span>}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   SECCIÓN DESPLEGABLE — encabezado clicable con animación
+   suave. Inicia colapsada para mantener el formulario limpio.
+══════════════════════════════════════════════════════════ */
+function CollapsibleSection({ title, icon, summary, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className={[s.collapsible, open ? s.collapsibleOpen : ''].join(' ')}>
+      <button
+        type="button"
+        className={s.collapsibleHdr}
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+      >
+        <span className={s.collapsibleIco}>{icon}</span>
+        <span className={s.collapsibleTitle}>{title}</span>
+        {!open && summary && (
+          <span className={s.collapsibleSummary}>{summary}</span>
+        )}
+        <span className={[s.collapsibleChevron, open ? s.chevronUp : ''].join(' ')} aria-hidden>
+          ▾
+        </span>
+      </button>
+      <div className={s.collapsibleBody} style={{ display: open ? 'block' : 'none' }}>
+        <div className={s.collapsibleInner}>
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -74,7 +106,7 @@ function TokenInput({ value, onChange, disabled, label, id }) {
             className={[s.tokenCell, d.trim() ? s.tokenFilled : ''].join(' ')}
             onKeyDown={e => handleKey(i, e)}
             onPaste={handlePaste}
-            onChange={() => {}}   /* controlled via onKeyDown */
+            onChange={() => { }}   /* controlled via onKeyDown */
             aria-label={`Dígito ${i + 1} de ${label}`}
           />
         ))}
@@ -92,12 +124,12 @@ function TokenInput({ value, onChange, disabled, label, id }) {
      4. Al confirmar ambos → ejecuta la actualización
 ══════════════════════════════════════════════════════════ */
 function ModalVerificacion({ acc, formData, onClose, onVerificado }) {
-  const [fase,       setFase]    = useState('enviando'); // enviando | ingresando | verificando | error
-  const [tokenSms,   setTokenSms]  = useState('    ');
-  const [tokenEmail, setTokenEmail]= useState('    ');
-  const [errorMsg,   setErrorMsg]  = useState('');
-  const [countdown,  setCountdown] = useState(120); // 2 min TTL
-  const [demoToken,  setDemoToken] = useState('');
+  const [fase, setFase] = useState('enviando'); // enviando | ingresando | verificando | error
+  const [tokenSms, setTokenSms] = useState('    ');
+  const [tokenEmail, setTokenEmail] = useState('    ');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [countdown, setCountdown] = useState(120); // 2 min TTL
+  const [demoToken, setDemoToken] = useState('');
 
   /* Envía los tokens al montar */
   useEffect(() => {
@@ -122,9 +154,9 @@ function ModalVerificacion({ acc, formData, onClose, onVerificado }) {
     setErrorMsg('');
     try {
       const r = await solicitarTokenVerificacion({
-        accId:    acc.codigo,
+        accId: acc.codigo,
         telefono: formData.tel_celular || acc.tel_celular,
-        email:    formData.email       || acc.email,
+        email: formData.email || acc.email,
       });
       setDemoToken(r._demo_token || '');
       setFase('ingresando');
@@ -135,11 +167,11 @@ function ModalVerificacion({ acc, formData, onClose, onVerificado }) {
   }
 
   async function confirmar() {
-    const sms   = tokenSms.replace(/ /g, '');
+    const sms = tokenSms.replace(/ /g, '');
     const email = tokenEmail.replace(/ /g, '');
 
-    if (sms.length < 4)   { setErrorMsg('Ingrese el código completo de 4 dígitos recibido por SMS.'); return; }
-    if (expirado)         { setErrorMsg('Los códigos han expirado. Solicite nuevos códigos.'); return; }
+    if (sms.length < 4) { setErrorMsg('Ingrese el código completo de 4 dígitos recibido por SMS.'); return; }
+    if (expirado) { setErrorMsg('Los códigos han expirado. Solicite nuevos códigos.'); return; }
 
     setFase('verificando');
     setErrorMsg('');
@@ -283,7 +315,7 @@ function ModalVerificacion({ acc, formData, onClose, onVerificado }) {
             variant="teal"
             loading={fase === 'verificando'}
             disabled={fase !== 'ingresando' || expirado ||
-                      tokenSms.trim().length < 4 }
+              tokenSms.trim().length < 4}
             onClick={confirmar}
             style={{ width: 'auto', padding: '11px 28px' }}
           >
@@ -317,20 +349,12 @@ export default function DatosPersonalesForm({ acc }) {
 
   /* Campos editables en estado local */
   const [form, setForm] = useState({
-    email:       acc.email       || '',
-    tel_casa:    acc.tel_casa    || '',
+    email: acc.email || '',
     tel_celular: acc.tel_celular || '',
-    tel_trabajo: acc.tel_trabajo || '',
-    lugar_trabajo: acc.lugar_trabajo || '',
-    pais:          acc.pais          || 'GTM',
-    cod_depto:     acc.cod_depto     || '01',
-    cod_municipio: acc.cod_municipio || '101',
-    direccion:     acc.direccion     || '',
-    zona:          acc.zona          || '',
   });
 
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [saving,       setSaving]       = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const upd = useCallback((k, v) => setForm(p => ({ ...p, [k]: v })), []);
 
@@ -362,126 +386,116 @@ export default function DatosPersonalesForm({ acc }) {
   }
 
   /* Mapeos de solo lectura */
-  const GENERO      = { M: 'Masculino', F: 'Femenino' };
+  const GENERO = { M: 'Masculino', F: 'Femenino' };
   const ESTADO_CIVIL = { C: 'Casado/a', S: 'Soltero/a', D: 'Divorciado/a', V: 'Viudo/a', U: 'Unido/a' };
-  const ACTIVIDAD   = { K6499: 'K6499 – Actividades Financieras', G4711: 'G4711 – Comercio' };
-  const PROFESION   = { ING: 'Ingeniero/a', ABG: 'Abogado/a', MED: 'Médico/a', ADM: 'Administrador/a' };
-  const NIVEL       = { UNI: 'Universitario', DIV: 'Diversificado', POS: 'Postgrado' };
+  const ACTIVIDAD = { K6499: 'K6499 – Actividades Financieras', G4711: 'G4711 – Comercio' };
+  const PROFESION = { ING: 'Ingeniero/a', ABG: 'Abogado/a', MED: 'Médico/a', ADM: 'Administrador/a' };
+  const NIVEL = { UNI: 'Universitario', DIV: 'Diversificado', POS: 'Postgrado' };
 
   return (
     <div>
       <Alert type="info">
-        Los campos marcados como <strong>Sistema Central</strong> provienen de RENAP y el core bancario —
+        Los campos marcados como provienen de RENAP y el core bancario —
         no son editables en este módulo. Solo los campos de contacto, dirección y datos laborales
         pueden actualizarse previa verificación de identidad.
       </Alert>
 
       {/* ── DATOS NO EDITABLES (Sistema Central) ── */}
-      <SectionTitle icon="🔒">Datos Personales — Solo Lectura</SectionTitle>
-      <FieldRow cols={4}>
-        <ReadOnlyField label="Primer Nombre"    value="CARLOS" />
-        <ReadOnlyField label="Segundo Nombre"   value="" />
-        <ReadOnlyField label="Primer Apellido"  value="MENDOZA" />
-        <ReadOnlyField label="Segundo Apellido" value="ARRIAGA" />
-      </FieldRow>
-      <FieldRow cols={3}>
-        <ReadOnlyField label="Apellido de Casada/o" value="" />
-        <ReadOnlyField label="No. DPI" value={acc.dpi} mono />
-        <ReadOnlyField label="NIT" value={acc.nit} mono />
-      </FieldRow>
-      <FieldRow cols={3}>
-        <ReadOnlyField label="Fecha de Nacimiento" value={acc.fecha_nacimiento} />
-        <ReadOnlyField label="Género"              value={GENERO[acc.genero] || acc.genero} />
-        <ReadOnlyField label="Estado Civil"        value={ESTADO_CIVIL[acc.estado_civil] || acc.estado_civil} />
-      </FieldRow>
-      <FieldRow cols={3}>
-        <ReadOnlyField label="Actividad Económica" value={ACTIVIDAD[acc.actividad_economica] || acc.actividad_economica} />
-        <ReadOnlyField label="Profesión"           value={PROFESION[acc.profesion] || acc.profesion} />
-        <ReadOnlyField label="Nivel de Estudios"   value={NIVEL[acc.nivel_estudios] || acc.nivel_estudios} />
-      </FieldRow>
+      <CollapsibleSection
+        icon="🔒"
+        title="Datos Personales — Solo Lectura"
+        summary="CARLOS MENDOZA ARRIAGA"
+      >
+        <FieldRow cols={4}>
+          <ReadOnlyField label="Primer Nombre" value="CARLOS" />
+          <ReadOnlyField label="Segundo Nombre" value="" />
+          <ReadOnlyField label="Primer Apellido" value="MENDOZA" />
+          <ReadOnlyField label="Segundo Apellido" value="ARRIAGA" />
+        </FieldRow>
+        <FieldRow cols={3}>
+          <ReadOnlyField label="Apellido de Casada/o" value="" />
+          <ReadOnlyField label="No. DPI" value={acc.dpi} mono />
+          <ReadOnlyField label="NIT" value={acc.nit} mono />
+        </FieldRow>
+        <FieldRow cols={3}>
+          <ReadOnlyField label="Fecha de Nacimiento" value={acc.fecha_nacimiento} />
+          <ReadOnlyField label="Género" value={GENERO[acc.genero] || acc.genero} />
+          <ReadOnlyField label="Estado Civil" value={ESTADO_CIVIL[acc.estado_civil] || acc.estado_civil} />
+        </FieldRow>
+        <FieldRow cols={3}>
+          <ReadOnlyField label="Actividad Económica" value={ACTIVIDAD[acc.actividad_economica] || acc.actividad_economica} />
+          <ReadOnlyField label="Profesión" value={PROFESION[acc.profesion] || acc.profesion} />
+          <ReadOnlyField label="Nivel de Estudios" value={NIVEL[acc.nivel_estudios] || acc.nivel_estudios} />
+        </FieldRow>
+        <SectionTitle icon="📍">Dirección</SectionTitle>
+        <FieldRow cols={3}>
+          <Select label="País" value={form.pais} disabled onChange={() => { }}>
+            <option value="GTM">Guatemala</option>
+            <option value="HND">Honduras</option>
+            <option value="MEX">México</option>
+          </Select>
+          <Select label="Departamento" value={form.cod_depto} disabled onChange={() => { }}>
+            <option value="01">Guatemala</option>
+            <option value="02">Sacatepéquez</option>
+            <option value="03">Escuintla</option>
+          </Select>
+          <Select label="Municipio" value={form.cod_municipio} disabled onChange={() => { }}>
+            <option value="101">Guatemala</option>
+            <option value="102">Mixco</option>
+            <option value="103">Villa Nueva</option>
+          </Select>
+        </FieldRow>
+        <FieldRow cols={3}>
+          <div style={{ gridColumn: '1 / 3' }}>
+            <Input
+              label="Dirección"
+              readOnly
+              value={form.direccion}
+              onChange={() => { }}
+            />
+          </div>
+          <Input
+            label="Zona"
+            mono
+            readOnly
+            value={form.zona}
+            onChange={() => { }}
+          />
+        </FieldRow>
+      </CollapsibleSection>
 
       {/* ── DATOS EDITABLES ── */}
-      <SectionTitle icon="✏️">Contacto — Editable</SectionTitle>
-      <div className={s.editNotice}>
-        <span>✏️</span>
-        Los siguientes campos pueden actualizarse. Al guardar se solicitará verificación
-        de identidad por <strong>SMS</strong> y <strong>correo electrónico</strong>.
-      </div>
-
-      <FieldRow cols={3}>
-        <Input
-          label="Correo Electrónico"
-          required
-          type="email"
-          value={form.email}
-          onChange={e => upd('email', e.target.value)}
-          hint="Se usará para el código de verificación"
-        />
-        <Input
-          label="Teléfono Casa"
-          mono
-          value={form.tel_casa}
-          onChange={e => upd('tel_casa', e.target.value.replace(/\D/g, ''))}
-        />
-        <Input
-          label="Teléfono Celular"
-          mono
-          required
-          value={form.tel_celular}
-          onChange={e => upd('tel_celular', e.target.value.replace(/\D/g, ''))}
-          hint="Se usará para el código SMS"
-        />
-      </FieldRow>
-      <FieldRow cols={2}>
-        <Input
-          label="Teléfono Trabajo"
-          mono
-          value={form.tel_trabajo}
-          onChange={e => upd('tel_trabajo', e.target.value.replace(/\D/g, ''))}
-        />
-        <Input
-          label="Lugar de Trabajo"
-          value={form.lugar_trabajo}
-          onChange={e => upd('lugar_trabajo', e.target.value)}
-        />
-      </FieldRow>
-
-      <SectionTitle icon="📍">Dirección — Editable</SectionTitle>
-      <FieldRow cols={3}>
-        <Select label="País" value={form.pais} onChange={e => upd('pais', e.target.value)}>
-          <option value="GTM">Guatemala</option>
-          <option value="HND">Honduras</option>
-          <option value="MEX">México</option>
-        </Select>
-        <Select label="Departamento" value={form.cod_depto} onChange={e => upd('cod_depto', e.target.value)}>
-          <option value="01">Guatemala</option>
-          <option value="02">Sacatepéquez</option>
-          <option value="03">Escuintla</option>
-        </Select>
-        <Select label="Municipio" value={form.cod_municipio} onChange={e => upd('cod_municipio', e.target.value)}>
-          <option value="101">Guatemala</option>
-          <option value="102">Mixco</option>
-          <option value="103">Villa Nueva</option>
-        </Select>
-      </FieldRow>
-      <FieldRow cols={3}>
-        <div style={{ gridColumn: '1 / 3' }}>
-          <Input
-            label="Dirección"
-            required
-            value={form.direccion}
-            onChange={e => upd('direccion', e.target.value)}
-          />
+      <CollapsibleSection
+        icon="✏️"
+        title="Contacto — Editable"
+        variant="editable"
+        defaultOpen
+      >
+        <div className={s.editNotice}>
+          <span>✏️</span>
+          Los siguientes campos pueden actualizarse. Al guardar se solicitará verificación
+          de identidad por <strong>SMS</strong> y <strong>correo electrónico</strong>.
         </div>
-        <Input
-          label="Zona"
-          mono
-          value={form.zona}
-          onChange={e => upd('zona', e.target.value.replace(/\D/g, ''))}
-        />
-      </FieldRow>
 
-      <hr style={{ border: 'none', borderTop: '1.5px solid var(--gray-100)', margin: '20px 0' }} />
+        <FieldRow cols={2}>
+          <Input
+            label="Correo Electrónico"
+            required
+            type="email"
+            value={form.email}
+            onChange={e => upd('email', e.target.value)}
+            hint="Se usará para el código de verificación"
+          />
+          <Input
+            label="Teléfono Celular"
+            mono
+            required
+            value={form.tel_celular}
+            onChange={e => upd('tel_celular', e.target.value.replace(/\D/g, ''))}
+            hint="Se usará para el código SMS"
+          />
+        </FieldRow>
+      </CollapsibleSection>
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <Button
@@ -494,11 +508,8 @@ export default function DatosPersonalesForm({ acc }) {
           🔐 &nbsp;Guardar con Verificación
         </Button>
         <Button variant="secondary" onClick={() => setForm({
-          email: acc.email || '', tel_casa: acc.tel_casa || '',
-          tel_celular: acc.tel_celular || '', tel_trabajo: acc.tel_trabajo || '',
-          lugar_trabajo: acc.lugar_trabajo || '', pais: acc.pais || 'GTM',
-          cod_depto: acc.cod_depto || '01', cod_municipio: acc.cod_municipio || '101',
-          direccion: acc.direccion || '', zona: acc.zona || '',
+          email: acc.email || '',
+          tel_celular: acc.tel_celular || '',
         })}>
           Restaurar
         </Button>
