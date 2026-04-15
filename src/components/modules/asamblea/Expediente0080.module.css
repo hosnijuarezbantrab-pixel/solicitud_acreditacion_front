@@ -1,4 +1,4 @@
-.asmHdr{display:flex;align-items:center;gap:11px;padding:10px 15px;background:var(--teal-pale);border:1px solid rgba(0,191,165,.2);border-radius:12px;margin-bottom:18px;flex-wrap:wrap}
+.asmHdr{display:flex;align-items:center;gap:11px;padding:10px 15px;background:var(--corp-cian);border:1px solid rgba(0,191,165,.22);border-radius:12px;margin-bottom:18px;flex-wrap:wrap}
 .asmPill{padding:3px 10px;border-radius:20px;font-size:.59rem;font-weight:700;flex-shrink:0}
 .pOrd{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2)}
 .pExt{background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
@@ -11,9 +11,9 @@
 .tabAct{background:var(--teal);color:#fff;box-shadow:0 3px 10px rgba(0,191,165,.35)}
 
 /* CHECK ROWS */
-.chkRow{display:flex;align-items:center;gap:11px;padding:11px 15px;border-radius:12px;border:1.5px solid var(--gray-200);background:var(--gray-50);cursor:pointer;transition:all .15s;margin-bottom:9px;user-select:none}
-.chkRow:hover{border-color:var(--teal-lt);background:var(--teal-pale)}
-.chkOn{border-color:var(--teal)!important;background:var(--teal-pale)!important}
+.chkRow{display:flex;align-items:center;gap:11px;padding:11px 15px;border-radius:12px;border:1.5px solid var(--gray-200);background:var(--corp-gray);cursor:pointer;transition:all .15s;margin-bottom:9px;user-select:none}
+.chkRow:hover{border-color:var(--teal-lt);background:var(--corp-cian)}
+.chkOn{border-color:var(--teal)!important;background:var(--corp-cian)!important}
 .chkDis{opacity:.5;cursor:not-allowed;pointer-events:none}
 .chkBox{width:18px;height:18px;border:2px solid var(--gray-300);border-radius:5px;flex-shrink:0;transition:all .15s;display:flex;align-items:center;justify-content:center;min-width:18px}
 .chkBoxOn{background:var(--teal);border-color:var(--teal)}
@@ -30,14 +30,14 @@
 
 /* CREDENCIAL */
 .credGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
-.credBox{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px;padding:11px 15px}
+.credBox{background:var(--corp-gray);border:1.5px solid var(--gray-200);border-radius:12px;padding:11px 15px}
 .credLbl{font-size:.57rem;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--gray-400);margin-bottom:4px}
 .credVal{font-size:.86rem;font-weight:700;color:var(--navy)}
 .credTl{color:var(--teal-dk)}
 
 /* TABLE */
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{text-align:left;padding:8px 13px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);border-bottom:1.5px solid var(--gray-100);background:var(--gray-50)}
+.tbl th{text-align:left;padding:8px 13px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);border-bottom:1.5px solid var(--gray-200);background:var(--corp-gray)}
 .tbl td{padding:11px 13px;font-size:.77rem;border-bottom:1px solid var(--gray-100);vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tr:hover td{background:rgba(0,191,165,.03)}

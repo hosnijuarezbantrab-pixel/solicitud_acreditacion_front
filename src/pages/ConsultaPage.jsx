@@ -6,17 +6,16 @@ import ConflictoInteresForm from '../components/modules/accionista/ConflictoInte
 import TitulosGrid from '../components/modules/accionista/TitulosGrid.jsx';
 import ParticipacionForm from '../components/modules/accionista/ParticipacionForm.jsx';
 import SelectorForma from '../components/modules/asamblea/SelectorForma.jsx';
-import { Card, CardHeader, CardBody } from '../components/ui/Card.jsx';
+import { Card, CardBody } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/UI.jsx';
 import { getAccionistaPorDPI, getAsambleasActivas } from '../services/api.js';
 import { useApp, A } from '../context/AppContext.jsx';
 import s from './ConsultaPage.module.css';
 
 const TABS = [
-  { key: 'datos', label: 'Datos Personales', icon: '👤' },
-  { key: 'conflicto', label: 'Conflicto de Interés', icon: '⚖️' },
+  { key: 'datos', label: 'Actualización de Datos', icon: '✏️' },
+  { key: 'acreditacion', label: 'Solicitud de Acreditación', icon: '🎫' },
   { key: 'titulos', label: 'Títulos Pendientes', icon: '📜' },
-  { key: 'participacion', label: 'Info. Complementaria', icon: '♿' },
 ];
 
 export default function ConsultaPage() {
@@ -24,7 +23,6 @@ export default function ConsultaPage() {
   const { accionista, accionistaLoading, accionistaError } = state;
 
   const [tab, setTab] = useState('datos');
-  const [acred, setAcred] = useState(false);
   const [asambleas, setAsambleas] = useState([]);
 
   useEffect(() => {
@@ -37,7 +35,6 @@ export default function ConsultaPage() {
       const data = await getAccionistaPorDPI(dpi);
       dispatch({ type: A.SET_ACC, payload: data });
       setTab('datos');
-      setAcred(false);
       notify('success', 'Accionista encontrado correctamente.');
     } catch (e) {
       dispatch({ type: A.ACC_ERROR, payload: e.message });
@@ -47,7 +44,7 @@ export default function ConsultaPage() {
 
   const handleReset = useCallback(() => {
     dispatch({ type: A.CLEAR_ACC });
-    setAcred(false);
+    setTab('datos');
   }, [dispatch]);
 
   return (
@@ -69,73 +66,58 @@ export default function ConsultaPage() {
         )}
       </div>
 
-      {/* ── DPI Buscador ── */}
+      {/* ── Buscador por DPI ── */}
       <DpiBuscador
         onSearch={handleSearch}
         loading={accionistaLoading}
         error={accionistaError}
       />
 
-      {/* ── Accionista encontrado ── */}
-      {accionista && !acred && (
+      {/* ── Resultado ── */}
+      {accionista && (
         <>
-          <AccionistaHeader
-            acc={accionista}
-            onAccreditar={() => setAcred(true)}
-          />
+          {/* Header del accionista */}
+          <AccionistaHeader acc={accionista} />
 
-          {/* Tabs */}
+          {/* Barra de tabs tipo pill */}
           <div className={s.tabsBar}>
             {TABS.map(t => (
               <button
                 key={t.key}
+                id={`tab-${t.key}`}
                 className={[s.tab, tab === t.key ? s.tabAct : ''].join(' ')}
                 onClick={() => setTab(t.key)}
+                aria-selected={tab === t.key}
+                role="tab"
               >
-                <span aria-hidden>{t.icon}</span> {t.label}
+                <span aria-hidden>{t.icon}</span>
+                {t.label}
               </button>
             ))}
           </div>
 
+          {/* Contenido del tab */}
           <Card style={{ borderRadius: 20 }}>
             <CardBody>
-              {tab === 'datos' && <DatosPersonalesForm acc={accionista} />}
-              {tab === 'conflicto' && <ConflictoInteresForm acc={accionista} />}
-              {tab === 'titulos' && <TitulosGrid accId={accionista.codigo} />}
-              {tab === 'participacion' && (
-                <ParticipacionForm acc={accionista} />
+              {tab === 'datos' && (
+                <DatosPersonalesForm acc={accionista} />
               )}
-            </CardBody>
-          </Card>
-        </>
-      )}
-
-      {/* ── Vista de Acreditación ── */}
-      {accionista && acred && (
-        <>
-          <div className={s.acredBar}>
-            <Button variant="ghost" size="sm" onClick={() => setAcred(false)}>
-              ← Volver al Perfil
-            </Button>
-            <div className={s.acredBarDiv} />
-            <span className={s.acredBarTitle}>
-              🎫 Acreditación en Asamblea — {accionista.nombre}
-            </span>
-          </div>
-
-          <Card style={{ borderRadius: 20 }}>
-            <CardHeader
-              title="🎫 Módulo de Acreditación"
-              actions={
-                <Button variant="ghost" size="sm" onClick={() => setAcred(false)}>✕</Button>
-              }
-            />
-            <CardBody>
-              <SelectorForma
-                acc={accionista}
-                asambleas={asambleas}
-                onClose={() => { setAcred(false); handleReset(); }}
-              />
+              {tab === 'acreditacion' && (
+                <>
+                  <SelectorForma
+                    acc={accionista}
+                    asambleas={asambleas}
+                    onClose={handleReset}
+                  />
+                  <div className={s.tabDivider} />
+                  <ConflictoInteresForm acc={accionista} />
+                  <div className={s.tabDivider} />
+                  <ParticipacionForm acc={accionista} />
+                </>
+              )}
+              {tab === 'titulos' && (
+                <TitulosGrid accId={accionista.codigo} />
+              )}
             </CardBody>
           </Card>
         </>

@@ -1,6 +1,6 @@
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:8px;}
-.card{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:16px;padding:18px 20px;cursor:pointer;transition:all .15s;}
-.card:hover{border-color:var(--teal);background:var(--teal-pale);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,191,165,.15);}
+.card{background:var(--corp-gray);border:1.5px solid var(--gray-200);border-radius:16px;padding:18px 20px;cursor:pointer;transition:all .15s;}
+.card:hover{border-color:var(--teal);background:var(--corp-cian);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,191,165,.15);}
 .cardTop{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .pill{padding:3px 11px;border-radius:20px;font-size:.6rem;font-weight:700;flex-shrink:0;}
 .pOrd{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);}

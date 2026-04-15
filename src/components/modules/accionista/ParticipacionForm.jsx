@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Button, Alert, Tag, Spinner } from '../../ui/UI.jsx';
-import { SectionTitle, FieldRow } from '../../ui/Card.jsx';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Button, Alert, Tag, Spinner, MiniCheck, Checkbox } from '../../ui/UI.jsx';
+import { SectionTitle, StatCard } from '../../ui/Card.jsx';
 import { useApp } from '../../../context/AppContext.jsx';
 import {
   getLimitacionesFuncionales,
@@ -11,9 +11,15 @@ import {
   guardarAcompanante,
   eliminarAcompanante,
   getAsambleasActivas,
+  getDetalleInversion,
   exportarReporteLimitacion,
   exportarReporteAcompanante,
+  generarTokenFirma,
+  consultarEstadoFirma,
+  acreditarEnAsamblea,
+  getEstadosExpediente,
 } from '../../../services/api.js';
+import { genRef } from '../../../utils/helpers.js';
 import s from './ParticipacionForm.module.css';
 
 // ── Selector múltiple de limitaciones funcionales ─────────────
@@ -105,10 +111,7 @@ function SeccionLimitacion({ acc, asmIds }) {
     try {
       await Promise.all(
         asmIds.map(id =>
-          guardarLimitacionFuncional(acc.codigo, id, {
-            limitaciones: seleccionadas,
-            observaciones,
-          })
+          guardarLimitacionFuncional(acc.codigo, id, { limitaciones: seleccionadas, observaciones })
         )
       );
       setOriginal(seleccionadas);
@@ -119,10 +122,7 @@ function SeccionLimitacion({ acc, asmIds }) {
     } finally { setSaving(false); }
   }
 
-  function handleDescartar() {
-    setSelec(original);
-    setObs(obsOriginal);
-  }
+  function handleDescartar() { setSelec(original); setObs(obsOriginal); }
 
   async function handleExportar() {
     setExporting(true);
@@ -131,15 +131,12 @@ function SeccionLimitacion({ acc, asmIds }) {
       for (const id of asmIds) {
         const blob = await exportarReporteLimitacion(id);
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        const a = document.createElement('a'); a.href = url;
         a.download = `reporte_limitacion_funcional_${id}_${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        a.click(); URL.revokeObjectURL(url);
       }
-    } catch (e) {
-      notify('error', e.message);
-    } finally { setExporting(false); }
+    } catch (e) { notify('error', e.message); }
+    finally { setExporting(false); }
   }
 
   if (loading) return <div className={s.loadWrap}><Spinner /> Cargando datos…</div>;
@@ -148,29 +145,19 @@ function SeccionLimitacion({ acc, asmIds }) {
     <div>
       <div className={s.secHeader}>
         <SectionTitle icon="♿">Limitación Funcional</SectionTitle>
-        <Button variant="secondary" size="sm" loading={exporting} onClick={handleExportar}>
-          📊 Exportar Excel
-        </Button>
       </div>
 
       <Alert type="info" style={{ marginBottom: 16 }}>
-        Registre las limitaciones funcionales del accionista si aplica. Esta información
-        no aparece en el formulario de acreditación, pero está disponible para reportería operativa.
+        Registre las limitaciones funcionales del accionista si aplica.
       </Alert>
 
-      <LimitacionSelector
-        opciones={opciones}
-        seleccionadas={seleccionadas}
-        onChange={setSelec}
-      />
+      <LimitacionSelector opciones={opciones} seleccionadas={seleccionadas} onChange={setSelec} />
 
       {seleccionadas.length > 0 && (
         <div style={{ marginTop: 14 }}>
           <label className={s.obsLabel}>Observaciones (opcional)</label>
           <textarea
-            className={s.obsInput}
-            rows={2}
-            maxLength={300}
+            className={s.obsInput} rows={2} maxLength={300}
             placeholder="Información adicional sobre la limitación funcional…"
             value={observaciones}
             onChange={e => setObs(e.target.value)}
@@ -185,9 +172,7 @@ function SeccionLimitacion({ acc, asmIds }) {
             style={{ width: 'auto', padding: '11px 28px' }}>
             💾 &nbsp;Guardar
           </Button>
-          <Button variant="ghost" size="md" onClick={handleDescartar}>
-            Descartar cambios
-          </Button>
+          <Button variant="ghost" size="md" onClick={handleDescartar}>Descartar cambios</Button>
         </div>
       )}
 
@@ -212,9 +197,9 @@ function SeccionLimitacion({ acc, asmIds }) {
 // ── Sección Acompañante Accionista ───────────────────────────
 function SeccionAcompanante({ acc, asmIds }) {
   const { notify } = useApp();
-  const [acompanante, setAcomp] = useState(undefined); // undefined=cargando, null=sin acomp
+  const [acompanante, setAcomp] = useState(undefined);
   const [dpiInput, setDpiInput] = useState('');
-  const [candidato, setCandidato] = useState(null);   // resultado de validarAcompanante
+  const [candidato, setCandidato] = useState(null);
   const [buscando, setBuscando] = useState(false);
   const [confirmando, setConfirm] = useState(false);
   const [eliminando, setEliminando] = useState(false);
@@ -225,56 +210,39 @@ function SeccionAcompanante({ acc, asmIds }) {
     let mounted = true;
     const firstAsmId = asmIds.length > 0 ? asmIds[0] : null;
     if (!firstAsmId) { setAcomp(null); return; }
-    getAcompanante(acc.codigo, firstAsmId).then(res => {
-      if (mounted) setAcomp(res ?? null);
-    }).catch(() => { if (mounted) setAcomp(null); });
+    getAcompanante(acc.codigo, firstAsmId)
+      .then(res => { if (mounted) setAcomp(res ?? null); })
+      .catch(() => { if (mounted) setAcomp(null); });
     return () => { mounted = false; };
   }, [acc.codigo, JSON.stringify(asmIds)]);
 
   async function handleBuscar() {
-    if (dpiInput.trim().length < 5) {
-      setErrorMsg('Ingrese un DPI válido (mínimo 5 dígitos).');
-      return;
-    }
-    setBuscando(true);
-    setErrorMsg('');
-    setCandidato(null);
+    if (dpiInput.trim().length < 5) { setErrorMsg('Ingrese un DPI válido (mínimo 5 dígitos).'); return; }
+    setBuscando(true); setErrorMsg(''); setCandidato(null);
     try {
-      const res = await Promise.all(
-        asmIds.map(id => validarAcompanante(dpiInput.trim(), acc.codigo, id))
-      );
+      const res = await Promise.all(asmIds.map(id => validarAcompanante(dpiInput.trim(), acc.codigo, id)));
       setCandidato(res[0]);
-    } catch (e) {
-      setErrorMsg(e.message);
-    } finally { setBuscando(false); }
+    } catch (e) { setErrorMsg(e.message); }
+    finally { setBuscando(false); }
   }
 
   async function handleConfirmar() {
     setConfirm(true);
     try {
-      await Promise.all(
-        asmIds.map(id => guardarAcompanante(acc.codigo, id, candidato.codigo))
-      );
-      setAcomp(candidato);
-      setCandidato(null);
-      setDpiInput('');
+      await Promise.all(asmIds.map(id => guardarAcompanante(acc.codigo, id, candidato.codigo)));
+      setAcomp(candidato); setCandidato(null); setDpiInput('');
       notify('success', 'Acompañante accionista registrado correctamente.');
-    } catch (e) {
-      notify('error', e.message);
-    } finally { setConfirm(false); }
+    } catch (e) { notify('error', e.message); }
+    finally { setConfirm(false); }
   }
 
   async function handleEliminar() {
     setEliminando(true);
     try {
-      await Promise.all(
-        asmIds.map(id => eliminarAcompanante(acc.codigo, id))
-      );
-      setAcomp(null);
-      notify('success', 'Acompañante removido.');
-    } catch (e) {
-      notify('error', e.message);
-    } finally { setEliminando(false); }
+      await Promise.all(asmIds.map(id => eliminarAcompanante(acc.codigo, id)));
+      setAcomp(null); notify('success', 'Acompañante removido.');
+    } catch (e) { notify('error', e.message); }
+    finally { setEliminando(false); }
   }
 
   async function handleExportar() {
@@ -284,15 +252,12 @@ function SeccionAcompanante({ acc, asmIds }) {
       for (const id of asmIds) {
         const blob = await exportarReporteAcompanante(id);
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        const a = document.createElement('a'); a.href = url;
         a.download = `reporte_acompanante_${id}_${new Date().toISOString().slice(0, 10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+        a.click(); URL.revokeObjectURL(url);
       }
-    } catch (e) {
-      notify('error', e.message);
-    } finally { setExporting(false); }
+    } catch (e) { notify('error', e.message); }
+    finally { setExporting(false); }
   }
 
   if (acompanante === undefined) return <div className={s.loadWrap}><Spinner /> Cargando datos…</div>;
@@ -301,9 +266,6 @@ function SeccionAcompanante({ acc, asmIds }) {
     <div>
       <div className={s.secHeader}>
         <SectionTitle icon="🤝">Acompañante Accionista</SectionTitle>
-        <Button variant="secondary" size="sm" loading={exporting} onClick={handleExportar}>
-          📊 Exportar Excel
-        </Button>
       </div>
 
       <Alert type="info" style={{ marginBottom: 16 }}>
@@ -311,7 +273,6 @@ function SeccionAcompanante({ acc, asmIds }) {
         No puede ser el mismo accionista titular.
       </Alert>
 
-      {/* Acompañante ya registrado */}
       {acompanante && (
         <div className={s.acompBox}>
           <div className={s.acompAv} aria-hidden>
@@ -328,41 +289,31 @@ function SeccionAcompanante({ acc, asmIds }) {
               <Tag color="teal" className={s.tagGap}>{acompanante.codigo}</Tag>
             </div>
           </div>
-          <Button variant="danger" size="sm" loading={eliminando} onClick={handleEliminar}
-            style={{ flexShrink: 0 }}>
+          <Button variant="danger" size="sm" loading={eliminando} onClick={handleEliminar} style={{ flexShrink: 0 }}>
             ✕ Remover
           </Button>
         </div>
       )}
 
-      {/* Sin acompañante — formulario de búsqueda */}
       {!acompanante && (
         <>
           <div className={s.dpiRow}>
             <div className={s.dpiWrap}>
               <input
-                type="text"
-                inputMode="numeric"
-                className={s.dpiInput}
+                type="text" inputMode="numeric" className={s.dpiInput}
                 placeholder="Ingrese DPI del acompañante (13 dígitos)"
-                maxLength={13}
-                value={dpiInput}
+                maxLength={13} value={dpiInput}
                 onChange={e => { setDpiInput(e.target.value.replace(/\D/g, '')); setErrorMsg(''); setCandidato(null); }}
                 onKeyDown={e => e.key === 'Enter' && handleBuscar()}
               />
-              <Button variant="teal" size="md" loading={buscando}
-                disabled={dpiInput.length < 5}
-                onClick={handleBuscar}
-                style={{ flexShrink: 0 }}>
+              <Button variant="teal" size="md" loading={buscando} disabled={dpiInput.length < 5}
+                onClick={handleBuscar} style={{ flexShrink: 0 }}>
                 🔍 Buscar
               </Button>
             </div>
-            {errorMsg && (
-              <div className={s.errMsg} role="alert">⚠️ {errorMsg}</div>
-            )}
+            {errorMsg && <div className={s.errMsg} role="alert">⚠️ {errorMsg}</div>}
           </div>
 
-          {/* Vista previa del candidato antes de confirmar */}
           {candidato && (
             <div className={s.candidatoBox}>
               <div className={s.candidatoHdr}>
@@ -370,29 +321,13 @@ function SeccionAcompanante({ acc, asmIds }) {
                 <div className={s.candidatoTtl}>Accionista encontrado — confirme antes de asignar</div>
               </div>
               <div className={s.candidatoDatos}>
-                <div className={s.candidatoCampo}>
-                  <span className={s.candidatoLbl}>Nombre completo</span>
-                  <span className={s.candidatoVal}>{candidato.nombre}</span>
-                </div>
-                <div className={s.candidatoCampo}>
-                  <span className={s.candidatoLbl}>Expediente</span>
-                  <span className={s.candidatoVal} style={{ color: 'var(--teal-dk)', fontFamily: 'monospace', fontWeight: 700 }}>
-                    {candidato.expediente}
-                  </span>
-                </div>
-                <div className={s.candidatoCampo}>
-                  <span className={s.candidatoLbl}>Código</span>
-                  <span className={s.candidatoVal}>{candidato.codigo}</span>
-                </div>
-                <div className={s.candidatoCampo}>
-                  <span className={s.candidatoLbl}>Estado</span>
-                  <Tag color="green">✓ Acreditado</Tag>
-                </div>
+                <div className={s.candidatoCampo}><span className={s.candidatoLbl}>Nombre completo</span><span className={s.candidatoVal}>{candidato.nombre}</span></div>
+                <div className={s.candidatoCampo}><span className={s.candidatoLbl}>Expediente</span><span className={s.candidatoVal} style={{ color: 'var(--teal-dk)', fontFamily: 'monospace', fontWeight: 700 }}>{candidato.expediente}</span></div>
+                <div className={s.candidatoCampo}><span className={s.candidatoLbl}>Código</span><span className={s.candidatoVal}>{candidato.codigo}</span></div>
+                <div className={s.candidatoCampo}><span className={s.candidatoLbl}>Estado</span><Tag color="green">✓ Acreditado</Tag></div>
               </div>
               <div className={s.candidatoFtr}>
-                <Button variant="ghost" size="sm" onClick={() => { setCandidato(null); setDpiInput(''); }}>
-                  ← Cancelar
-                </Button>
+                <Button variant="ghost" size="sm" onClick={() => { setCandidato(null); setDpiInput(''); }}>← Cancelar</Button>
                 <Button variant="teal" size="md" loading={confirmando} onClick={handleConfirmar}
                   style={{ width: 'auto', padding: '10px 24px' }}>
                   ✓ &nbsp;Confirmar Acompañante
@@ -402,9 +337,7 @@ function SeccionAcompanante({ acc, asmIds }) {
           )}
 
           {!candidato && !buscando && !errorMsg && (
-            <p className={s.emptyHint}>
-              No se ha registrado ningún acompañante. Ingrese el DPI para buscar y asignar.
-            </p>
+            <p className={s.emptyHint}>No se ha registrado ningún acompañante. Ingrese el DPI para buscar y asignar.</p>
           )}
         </>
       )}
@@ -412,37 +345,232 @@ function SeccionAcompanante({ acc, asmIds }) {
   );
 }
 
-// ── Componente principal ──────────────────────────────────────
-export default function ParticipacionForm({ acc }) {
-  const [asambleas, setAsambleas] = useState([]);
-  const [asmIds, setAsmIds] = useState([]);
-  const [loadingAsm, setLoadingAsm] = useState(true);
+// ── Banner de token de firma ─────────────────────────────────
+const TOKEN_TTL = 300;
 
-  useEffect(() => {
-    getAsambleasActivas().then(list => {
-      setAsambleas(list);
-      if (list.length > 0) setAsmIds(list.map(a => a.id));
-      setLoadingAsm(false);
-    }).catch(() => setLoadingAsm(false));
+function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
+  const [tokenData, setTokenData] = useState(null);
+  const [estado, setEstado] = useState('idle');
+  const [ttlLeft, setTtlLeft] = useState(0);
+  const [errorMsg, setErrorMsg] = useState('');
+  const intervalRef = useRef(null);
+  const pollRef = useRef(null);
+
+  const startCountdown = useCallback((seconds) => {
+    clearInterval(intervalRef.current);
+    setTtlLeft(seconds);
+    intervalRef.current = setInterval(() => {
+      setTtlLeft(prev => {
+        if (prev <= 1) { clearInterval(intervalRef.current); setEstado('expirado'); stopPoll(); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
   }, []);
 
-  if (loadingAsm) return <div className={s.loadWrap}><Spinner /> Cargando asambleas…</div>;
+  const stopPoll = useCallback(() => clearInterval(pollRef.current), []);
 
-  if (!asambleas.length) {
-    return <Alert type="warning">No hay asambleas activas. La información complementaria se registra en el contexto de una asamblea habilitada.</Alert>;
+  const startPoll = useCallback((token, solId) => {
+    stopPoll();
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await consultarEstadoFirma(solId, token);
+        if (res.estado === 'USADO' || res.firmado) {
+          stopPoll(); clearInterval(intervalRef.current);
+          setEstado('completado'); onFirmaCompletada?.();
+        } else if (res.estado === 'EXPIRADO' || res.ttlRemainingSeconds === 0) {
+          stopPoll(); clearInterval(intervalRef.current);
+          setEstado('expirado'); setTtlLeft(0);
+        }
+      } catch { /* silencioso */ }
+    }, 5000);
+  }, [stopPoll, onFirmaCompletada]);
+
+  const generar = useCallback(async () => {
+    setEstado('generando'); setErrorMsg('');
+    try {
+      const res = await generarTokenFirma({
+        solicitudId,
+        accionistaId: acc.codigo,
+        accionista: acc.nombre,
+        dpi: acc.dpi,
+        accionesComunes: acc.acciones_comunes,
+        accionesPreferentes: acc.acciones_preferentes_a,
+        dividendos: acc.dividendos ? `Q${Number(acc.dividendos).toLocaleString('es-GT', { minimumFractionDigits: 2 })}` : undefined,
+      });
+      setTokenData(res); setEstado('activo');
+      startCountdown(res.ttlSeconds ?? TOKEN_TTL);
+      startPoll(res.token, solicitudId);
+    } catch (e) { setErrorMsg(e.message || 'Error al generar el token.'); setEstado('idle'); }
+  }, [acc, solicitudId, startCountdown, startPoll]);
+
+  useEffect(() => () => { clearInterval(intervalRef.current); stopPoll(); }, [stopPoll]);
+
+  const fmtTtl = (sec) => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+  const pct = tokenData ? (ttlLeft / (tokenData.ttlSeconds ?? TOKEN_TTL)) * 100 : 0;
+  const barColor = pct > 50 ? 'var(--teal)' : pct > 20 ? 'var(--amber)' : 'var(--red)';
+
+  if (estado === 'completado') {
+    return (
+      <div className={s.tokenBanner} style={{ borderColor: 'var(--green)', background: 'rgba(16,185,129,.06)' }}>
+        <div className={s.tokenBannerRow}>
+          <span className={s.tokenIco}>✅</span>
+          <div style={{ flex: 1 }}>
+            <div className={s.tokenTitle} style={{ color: 'var(--green)' }}>Firma completada</div>
+            <div className={s.tokenSub}>El accionista registró su rúbrica correctamente en la tablet.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={s.tokenBanner}>
+      <div className={s.tokenBannerRow}>
+        <span className={s.tokenIco}>✍️</span>
+        <div style={{ flex: 1 }}>
+          <div className={s.tokenTitle}>Firma digital de rúbrica</div>
+          <div className={s.tokenSub}>Genere el token y entrégueselo al accionista para que lo ingrese en la tablet de firma.</div>
+        </div>
+        {(estado === 'idle' || estado === 'expirado') && (
+          <Button variant={estado === 'expirado' ? 'secondary' : 'teal'} size="sm" onClick={generar} style={{ flexShrink: 0 }}>
+            {estado === 'expirado' ? '🔄 Regenerar token' : '🔑 Generar token'}
+          </Button>
+        )}
+        {estado === 'generando' && <Spinner size="sm" />}
+      </div>
+      {errorMsg && <div style={{ marginTop: 8, fontSize: '.73rem', color: 'var(--red)', paddingLeft: 36 }}>⚠️ {errorMsg}</div>}
+      {estado === 'activo' && tokenData && (
+        <div className={s.tokenBody}>
+          <div className={s.tokenCode}>
+            {tokenData.token.split('').map((d, i) => <span key={i} className={s.tokenDigit}>{d}</span>)}
+          </div>
+          <div className={s.tokenTtlRow}>
+            <span className={s.tokenTtlLabel}>Vigencia</span>
+            <span className={s.tokenTtlVal} style={{ color: barColor }}>{fmtTtl(ttlLeft)}</span>
+            <div className={s.tokenBar}><div className={s.tokenBarFill} style={{ width: `${pct}%`, background: barColor }} /></div>
+          </div>
+          <div style={{ fontSize: '.68rem', color: 'var(--gray-400)', marginTop: 6, textAlign: 'center' }}>Esperando que el accionista firme en la tablet…</div>
+        </div>
+      )}
+      {estado === 'expirado' && (
+        <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(239,68,68,.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,.2)', fontSize: '.73rem', color: 'var(--red)' }}>
+          ⏱ El token expiró. Regenere uno nuevo para que el accionista pueda firmar.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Sección Firma Digital + Confirmar Acreditación ────────────
+function SeccionFirma({ acc, asmIds }) {
+  const { notify } = useApp();
+  const [confirm, setConfirm] = useState(false);
+  const [firmaOk, setFirmaOk] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const solicitudId = useRef(genRef('SOL')).current;
+
+  async function handleConfirmar() {
+    if (!asmIds.length) { notify('error', 'Seleccione al menos una asamblea.'); return; }
+    setSaving(true);
+    try {
+      const asmDefs = asmIds.map(id => ({ id }));
+      await acreditarEnAsamblea({ accionista: acc.codigo, cod_estado: '1', asambleas: asmDefs });
+      setDone(true);
+      notify('success', `Acreditación completada en ${asmIds.length} asamblea(s).`);
+    } catch (e) { notify('error', e.message); }
+    finally { setSaving(false); }
+  }
+
+  if (done) {
+    return (
+      <div className={s.firmaOkBox}>
+        <span style={{ fontSize: '2rem' }}>🎫</span>
+        <div>
+          <div className={s.firmaOkTtl}>¡Acreditación exitosa!</div>
+          <div className={s.firmaOkSub}>El accionista fue acreditado en {asmIds.length} asamblea(s).</div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div>
-      <Alert type="info">
-        Esta información es <strong>opcional</strong> y no aparece en el formulario final de acreditación.
-        Está disponible para reportería operativa y control interno del área de Capitalización.
-      </Alert>
+      <SectionTitle icon="✍️">Firma Digital de Rúbrica</SectionTitle>
+      <FirmaTokenBanner acc={acc} solicitudId={solicitudId} onFirmaCompletada={() => setFirmaOk(true)} />
 
+      <div style={{ marginTop: 16, marginBottom: 16 }}>
+        <Checkbox
+          label={<>Confirmo que deseo acreditar a <strong>{acc.nombre}</strong> en la(s) asamblea(s) activa(s).</>}
+          checked={confirm}
+          onChange={setConfirm}
+        />
+      </div>
+
+      {!firmaOk && (
+        <Alert type="warning" style={{ marginBottom: 12 }}>
+          El botón de confirmación se habilitará una vez que el accionista complete la firma en la tablet.
+        </Alert>
+      )}
+
+      <hr style={{ border: 'none', borderTop: '1.5px solid var(--gray-100)', margin: '16px 0' }} />
+      <div style={{ display: 'flex', gap: 10 }}>
+        <Button
+          id="btn-confirmar-acreditacion"
+          variant="teal"
+          size="lg"
+          disabled={!confirm || !firmaOk || saving}
+          loading={saving}
+          onClick={handleConfirmar}
+          style={{ width: 'auto', padding: '12px 32px' }}
+        >
+          🎫 &nbsp;Confirmar Acreditación
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── Componente principal ──────────────────────────────────────
+export default function ParticipacionForm({ acc }) {
+  const [asambleas, setAsambleas] = useState([]);
+  const [selected, setSelected] = useState([]);
+  const [inversiones, setInv] = useState([]);
+  const [loadingAsm, setLoadingAsm] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      getAsambleasActivas(),
+      getDetalleInversion(null, acc.codigo),
+    ]).then(([list, inv]) => {
+      setAsambleas(list);
+      setSelected(list.map(a => a.id));
+      setInv(inv || []);
+      setLoadingAsm(false);
+    }).catch(() => setLoadingAsm(false));
+  }, [acc.codigo]);
+
+  const toggleAsm = id =>
+    setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+
+  if (loadingAsm) return <div className={s.loadWrap}><Spinner /> Cargando asambleas…</div>;
+
+  if (!asambleas.length) {
+    return (
+      <Alert type="warning">
+        No hay asambleas activas. La información complementaria se registra en el contexto de una asamblea habilitada.
+      </Alert>
+    );
+  }
+
+  return (
+    <div>
       <div className={s.sections}>
-        <SeccionLimitacion acc={acc} asmIds={asmIds} />
+        <SeccionLimitacion acc={acc} asmIds={selected} />
         <hr className={s.hr} />
-        <SeccionAcompanante acc={acc} asmIds={asmIds} />
+        <SeccionAcompanante acc={acc} asmIds={selected} />
+        <hr className={s.hr} />
+        <SeccionFirma acc={acc} asmIds={selected} />
       </div>
     </div>
   );

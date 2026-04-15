@@ -1,14 +1,41 @@
 import { useState } from 'react';
-import { Button, Chip } from '../../ui/UI.jsx';
-import { fmt, maskDPI, getEstatus } from '../../../utils/helpers.js';
+import { getEstatus } from '../../../utils/helpers.js';
 import s from './AccionistaHeader.module.css';
 
 export default function AccionistaHeader({ acc, onAccreditar }) {
   const est = getEstatus(acc.estatus);
   const [imgError, setImgError] = useState(false);
 
+  const GENERO = { M: 'MASCULINO', F: 'FEMENINO' };
+  const ESTADO_CIVIL = {
+    C: 'CASADO/A', S: 'SOLTERO/A', D: 'DIVORCIADO/A',
+    V: 'VIUDO/A', U: 'UNIDO/A',
+  };
+
+  const rows = [
+    [
+      { label: 'REGISTRO:', value: acc.codigo },
+      { label: 'DPI:', value: acc.dpi },
+      { label: 'FECHA DE NACIMIENTO:', value: acc.fecha_nacimiento },
+    ],
+    [
+      { label: 'ESTADO:', value: `${acc.estatus} – ${acc.descripEstatus || est.label}` },
+      { label: 'VENCE:', value: acc.vencimiento_dpi },
+      { label: 'ESTADO CIVIL:', value: (ESTADO_CIVIL[acc.estado_civil] || acc.estado_civil || '—').toUpperCase() },
+    ],
+    [
+      { label: 'FECHA:', value: acc.ultima_actualizacion },
+      { label: 'CORRELATIVO:', value: acc.correlativo ?? '—' },
+      { label: 'GÉNERO:', value: (GENERO[acc.genero] || acc.genero || '—').toUpperCase() },
+    ],
+  ];
+
   return (
     <div className={s.banner}>
+      {/* Accent lateral */}
+      <div className={s.accent} />
+
+      {/* Avatar */}
       {acc.foto && !imgError ? (
         <img
           src={acc.foto}
@@ -21,25 +48,22 @@ export default function AccionistaHeader({ acc, onAccreditar }) {
           {(acc.iniciales || acc.nombre?.slice(0, 2) || '??').toUpperCase()}
         </div>
       )}
-      <div className={s.info}>
+
+      {/* Bloque derecho: nombre + grilla */}
+      <div className={s.right}>
         <div className={s.nombre}>{acc.nombre}</div>
-        <div className={s.code}>{acc.codigo} · DPI {maskDPI(acc.dpi)}</div>
-        <div className={s.chips}>
-          <Chip color={est.color}>{est.label}</Chip>
-          <Chip color="teal">Est. {acc.estatus}</Chip>
-          <Chip color="amber">Act. {acc.ultima_actualizacion}</Chip>
+
+        <div className={s.grid}>
+          {rows.map((row, ri) =>
+            row.map((cell, ci) => (
+              <div className={s.cell} key={`${ri}-${ci}`}>
+                <span className={s.cellLabel}>{cell.label}</span>
+                <span className={s.cellValue}>{cell.value ?? '—'}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
-      <div className={s.metrics}>
-        <div className={s.met}><div className={`${s.mv} ${s.tl}`}>{(acc.acciones_comunes || 0).toLocaleString()}</div><div className={s.ml}>Acc. Comunes</div></div>
-        <div className={s.sep} />
-        <div className={s.met}><div className={s.mv}>{(acc.acciones_preferentes_a || 0).toLocaleString()}</div><div className={s.ml}>Acc. Pref. A</div></div>
-        <div className={s.sep} />
-        <div className={s.met}><div className={`${s.mv} ${s.gd}`}>{fmt(acc.dividendos || 0)}</div><div className={s.ml}>Dividendos</div></div>
-      </div>
-      <Button variant="teal" size="lg" style={{ flexShrink: 0, marginLeft: 16 }} onClick={onAccreditar}>
-        🎫 &nbsp;Acreditar en Asamblea
-      </Button>
     </div>
   );
 }

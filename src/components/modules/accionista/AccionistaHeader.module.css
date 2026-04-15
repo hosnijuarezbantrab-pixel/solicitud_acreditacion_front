@@ -1,45 +1,45 @@
+/* ──────────────────────────────────────────────
+   BANNER CONTENEDOR
+────────────────────────────────────────────── */
 .banner {
+    position: relative;
     background: var(--white);
-    border-radius: var(--card-radius);
-    box-shadow: var(--card-shadow);
-    border: var(--card-border);
-    padding: 20px 28px;
+    border-radius: var(--card-radius, 12px);
+    box-shadow: 0 2px 16px rgba(0, 150, 136, .10), 0 1px 4px rgba(0,0,0,.06);
+    border: 1px solid rgba(0, 191, 165, .18);
+    padding: 20px 28px 20px 32px;
     margin-bottom: 24px;
     display: flex;
     align-items: center;
-    gap: 35px;
-    position: relative;
+    gap: 28px;
     overflow: hidden;
-    animation: fsi .3s ease;
+    animation: fsi .35s ease;
 }
 
-.banner::before {
-    content: '';
+/* Línea accent teal izquierda */
+.accent {
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
-    background: linear-gradient(180deg, var(--teal), var(--teal-lt));
+    width: 5px;
+    background: linear-gradient(180deg, var(--teal, #00bfa5), var(--teal-lt, #80cbc4));
+    border-radius: 5px 0 0 5px;
 }
 
 @keyframes fsi {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ──────────────────────────────────────────────
+   AVATAR
+────────────────────────────────────────────── */
 .av {
-    width: 120px;
-    height: 120px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+    width: 110px;
+    height: 110px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--teal, #00bfa5), var(--teal-dk, #00796b));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -47,81 +47,99 @@
     font-weight: 800;
     color: #fff;
     flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(0, 191, 165, .35);
+    box-shadow: 0 4px 18px rgba(0, 150, 136, .28);
+    letter-spacing: 1px;
 }
 
 .avPic {
     object-fit: cover;
-    background: var(--gray-100);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 2px solid var(--white);
+    background: var(--gray-100, #f5f5f5);
+    box-shadow: 0 4px 16px rgba(0,0,0,.14);
+    border: 2px solid #fff;
 }
 
-.info {
+/* ──────────────────────────────────────────────
+   BLOQUE DERECHO (nombre + grilla)
+────────────────────────────────────────────── */
+.right {
     flex: 1;
+    min-width: 0;
 }
 
+/* NOMBRE */
 .nombre {
-    font-size: .95rem;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 4px;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--teal-dk, #00796b);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    line-height: 1.2;
 }
 
-.code {
-    font-size: .7rem;
-    color: var(--gray-400);
-    font-weight: 500;
+/* ──────────────────────────────────────────────
+   GRILLA DE DATOS 3 × 3
+────────────────────────────────────────────── */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
 }
 
-.chips {
+/* CELDA — estilo input de solo lectura */
+.cell {
     display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 8px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 7px 14px 8px;
+    background: var(--gray-50, #f5f6f8);
+    border: 1px solid var(--gray-200, #e2e5ea);
+    border-radius: 8px;
+    min-height: 52px;
+    transition: border-color .2s;
 }
 
-.metrics {
-    display: flex;
-    gap: 22px;
-    flex-shrink: 0;
+.cell:hover {
+    border-color: var(--teal-lt, #80cbc4);
+    background: #f0fafa;
 }
 
-.met {
-    text-align: right;
-}
-
-.mv {
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: var(--navy);
-}
-
-.mv.tl {
-    color: var(--teal-dk);
-}
-
-.mv.gd {
-    color: var(--gold-dk);
-}
-
-.ml {
+/* ETIQUETA — pequeña, gris, en la parte superior */
+.cellLabel {
     font-size: .58rem;
     font-weight: 700;
+    color: var(--gray-400, #8d9aab);
     text-transform: uppercase;
-    letter-spacing: .6px;
-    color: var(--gray-400);
-    margin-top: 2px;
+    letter-spacing: .55px;
+    line-height: 1;
+    white-space: nowrap;
 }
 
-.sep {
-    width: 1px;
-    background: var(--gray-200);
-    margin: 4px 0;
+/* VALOR — prominente, oscuro */
+.cellValue {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--navy, #1e2d45);
+    line-height: 1.25;
+    word-break: break-word;
 }
 
-@media(max-width:900px) {
-    .metrics {
-        display: none;
+/* ──────────────────────────────────────────────
+   RESPONSIVE
+────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .banner { flex-direction: column; align-items: flex-start; padding: 18px 18px 18px 24px; gap: 16px; }
+    .av     { width: 80px; height: 80px; font-size: 1.4rem; }
+    .nombre { font-size: 1rem; }
+
+    .grid {
+        grid-template-columns: 1fr;
     }
 }

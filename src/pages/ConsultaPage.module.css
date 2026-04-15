@@ -1,14 +1,84 @@
-.hdrRow{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:26px;gap:16px;}
-.breadcrumb{font-size:.67rem;color:var(--gray-400);margin-bottom:7px;font-weight:500;}
-.title{font-size:1.9rem;font-weight:800;line-height:1.15;margin-bottom:4px;}
-.tDark{color:var(--navy);}.tTeal{color:var(--teal-dk);}.tGold{color:var(--gold-dk);}
-.subtitle{font-size:.75rem;color:var(--gray-400);}
+/* ── Page Header ───────────────────────────────────────── */
+.hdrRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 26px;
+    gap: 16px;
+}
 
-.tabsBar{display:flex;gap:4px;background:var(--white);border-radius:16px;padding:5px;margin-bottom:20px;box-shadow:var(--card-shadow);width:fit-content;}
-.tab{padding:9px 20px;border-radius:12px;font-size:.73rem;font-weight:600;color:var(--gray-400);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px;white-space:nowrap;border:none;background:transparent;font-family:var(--font);}
-.tab:hover{color:var(--navy);background:var(--gray-50);}
-.tabAct{background:var(--teal);color:#fff;box-shadow:0 3px 10px rgba(0,191,165,.35);}
+.breadcrumb {
+    font-size: .67rem;
+    color: var(--gray-400);
+    margin-bottom: 7px;
+    font-weight: 500;
+}
 
-.acredBar{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:12px 20px;background:var(--white);border-radius:16px;box-shadow:var(--card-shadow);}
-.acredBarDiv{width:1px;height:20px;background:var(--gray-200);}
-.acredBarTitle{font-weight:700;font-size:.8rem;color:var(--navy);}
+.title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 4px;
+}
+
+.tDark  { color: var(--navy); }
+.tTeal  { color: var(--teal-dk); }
+.tGold  { color: var(--gold-dk); }
+.subtitle { font-size: .75rem; color: var(--gray-400); }
+
+/* ── Tabs Bar ──────────────────────────────────────────── */
+.tabsBar {
+    display: flex;
+    gap: 0;
+    background: var(--white);
+    border-radius: 50px;
+    padding: 5px 6px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05);
+    width: fit-content;
+    border: 1px solid var(--gray-100);
+}
+
+/* Tab individual */
+.tab {
+    padding: 9px 28px;
+    border-radius: 50px;
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: all .2s cubic-bezier(.4, 0, .2, 1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    border: none;
+    background: transparent;
+    font-family: var(--font);
+    letter-spacing: .1px;
+    position: relative;
+}
+
+.tab:hover:not(.tabAct) {
+    color: var(--navy);
+    background: var(--gray-50);
+}
+
+/* Tab activo */
+.tabAct {
+    background: var(--teal, #00bfa5);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(0, 191, 165, .38);
+    font-weight: 700;
+}
+
+.tabAct:hover {
+    background: var(--teal-dk, #00897b);
+}
+
+/* ── Divisor entre secciones del tab "datos" ─────────── */
+.tabDivider {
+    height: 1px;
+    background: var(--gray-100);
+    margin: 24px 0;
+}
