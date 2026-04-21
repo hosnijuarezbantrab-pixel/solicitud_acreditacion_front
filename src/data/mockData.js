@@ -20,14 +20,14 @@ export const MOCK_ACCIONISTA = {
 
 export const MOCK_ASAMBLEAS = [
   {
-    id: 1, num: 'ASM-2025-01', tipo: 'O', descripcion: 'ORDINARIA',
-    ordinal: 'Vigésima Primera', fecha: '28/03/2025', estado: 'S',
+    id: 1, num: 'ASM-2025-01', tipo: 'O', descripcion: '',
+    ordinal: 'LVIV Asamblea General Ordinaria de Accionistas', fecha: '28/03/2025', estado: 'S',
     fecha_entrega_desde: '2025-03-01', fecha_entrega_hasta: '2025-03-31',
     fecha_cred_desde: '2025-03-01', fecha_cred_hasta: '2025-03-31'
   },
   {
-    id: 2, num: 'ASM-2025-02', tipo: 'E', descripcion: 'EXTRAORDINARIA',
-    ordinal: 'Quinta Extraordinaria', fecha: '15/04/2025', estado: 'S',
+    id: 2, num: 'ASM-2025-02', tipo: 'E', descripcion: '',
+    ordinal: 'XXXI Asamblea General Extraordinaria de Accionistas', fecha: '15/04/2025', estado: 'S',
     fecha_entrega_desde: '2025-04-01', fecha_entrega_hasta: '2025-04-30',
     fecha_cred_desde: '2025-04-01', fecha_cred_hasta: '2025-04-30'
   },

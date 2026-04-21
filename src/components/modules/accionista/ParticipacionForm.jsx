@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Alert, Tag, Spinner, MiniCheck, Checkbox } from '../../ui/UI.jsx';
+import { Button, Alert, Tag, Spinner, MiniCheck, Checkbox, Select, Modal } from '../../ui/UI.jsx';
+
+
 import { SectionTitle, StatCard } from '../../ui/Card.jsx';
 import { useApp } from '../../../context/AppContext.jsx';
 import {
@@ -56,16 +58,21 @@ function LimitacionSelector({ opciones, seleccionadas, onChange, disabled }) {
 }
 
 // ── Sección Limitación Funcional ──────────────────────────────
-function SeccionLimitacion({ acc, asmIds }) {
-  const { notify } = useApp();
+function SeccionLimitacion({ acc, asmIds, seleccionadas, setSelec, enfermedad, setEnfermedad, original, setOriginal, enfOriginal, setEnfOrig }) {
+  const { notify, setSummary } = useApp();
   const [opcionesFull, setOpcionesFull] = useState([]);
+  
+  // ... (inside SeccionLimitacion)
+  useEffect(() => {
+    setSummary({ limitaciones: seleccionadas, enfermedad });
+  }, [seleccionadas, enfermedad, setSummary]);
+
   const [opciones, setOpciones] = useState([]);
-  const [seleccionadas, setSelec] = useState([]);
-  const [original, setOriginal] = useState([]);
   const [observaciones, setObs] = useState('');
   const [obsOriginal, setObsOrig] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -98,31 +105,33 @@ function SeccionLimitacion({ acc, asmIds }) {
       setOriginal(finalLims);
       setObs(mergedObs);
       setObsOrig(mergedObs);
+      // Aquí se podría cargar el valor del backend si existiera
       setLoading(false);
     }).catch(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
   }, [acc.codigo, JSON.stringify(asmIds)]);
 
   const dirty = JSON.stringify(seleccionadas.slice().sort()) !== JSON.stringify(original.slice().sort())
-    || observaciones !== obsOriginal;
+    || observaciones !== obsOriginal || enfermedad !== enfOriginal;
 
   async function handleGuardar() {
     setSaving(true);
     try {
       await Promise.all(
         asmIds.map(id =>
-          guardarLimitacionFuncional(acc.codigo, id, { limitaciones: seleccionadas, observaciones })
+          guardarLimitacionFuncional(acc.codigo, id, { limitaciones: seleccionadas, observaciones, enfermedad })
         )
       );
       setOriginal(seleccionadas);
       setObsOrig(observaciones);
+      setEnfOrig(enfermedad);
       notify('success', 'Limitación funcional guardada correctamente.');
     } catch (e) {
       notify('error', e.message);
     } finally { setSaving(false); }
   }
 
-  function handleDescartar() { setSelec(original); setObs(obsOriginal); }
+  function handleDescartar() { setSelec(original); setObs(obsOriginal); setEnfermedad(enfOriginal); }
 
   async function handleExportar() {
     setExporting(true);
@@ -151,7 +160,20 @@ function SeccionLimitacion({ acc, asmIds }) {
         Registre las limitaciones funcionales del accionista si aplica.
       </Alert>
 
-      <LimitacionSelector opciones={opciones} seleccionadas={seleccionadas} onChange={setSelec} />
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
+        <div style={{ flex: '0 1 auto' }}>
+          <LimitacionSelector opciones={opciones} seleccionadas={seleccionadas} onChange={setSelec} />
+        </div>
+        <div style={{ flex: '1 1 300px', maxWidth: '360px', marginLeft: 'auto' }}>
+          <Select label="Parentezco de Enfermedades" value={enfermedad} onChange={e => setEnfermedad(e.target.value)}>
+            <option value="">-- Seleccione --</option>
+            <option value="corazon">Corazón</option>
+            <option value="diabetes">Diabetes</option>
+            <option value="cancer">Cáncer</option>
+          </Select>
+        </div>
+      </div>
+
 
       {seleccionadas.length > 0 && (
         <div style={{ marginTop: 14 }}>
@@ -196,8 +218,14 @@ function SeccionLimitacion({ acc, asmIds }) {
 
 // ── Sección Acompañante Accionista ───────────────────────────
 function SeccionAcompanante({ acc, asmIds }) {
-  const { notify } = useApp();
+  const { notify, setSummary } = useApp();
   const [acompanante, setAcomp] = useState(undefined);
+  
+  // ... (inside SeccionAcompanante)
+  useEffect(() => {
+    setSummary({ acompanante });
+  }, [acompanante, setSummary]);
+
   const [dpiInput, setDpiInput] = useState('');
   const [candidato, setCandidato] = useState(null);
   const [buscando, setBuscando] = useState(false);
@@ -349,6 +377,9 @@ function SeccionAcompanante({ acc, asmIds }) {
 const TOKEN_TTL = 300;
 
 function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
+  const { state } = useApp();
+  const { summary } = state;
+  const [showSummary, setShowSummary] = useState(false);
   const [tokenData, setTokenData] = useState(null);
   const [estado, setEstado] = useState('idle');
   const [ttlLeft, setTtlLeft] = useState(0);
@@ -357,6 +388,7 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
   const pollRef = useRef(null);
 
   const startCountdown = useCallback((seconds) => {
+    // ... countdown logic (same as before)
     clearInterval(intervalRef.current);
     setTtlLeft(seconds);
     intervalRef.current = setInterval(() => {
@@ -386,6 +418,7 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
   }, [stopPoll, onFirmaCompletada]);
 
   const generar = useCallback(async () => {
+    setShowSummary(false); // Cierra modal
     setEstado('generando'); setErrorMsg('');
     try {
       const res = await generarTokenFirma({
@@ -409,6 +442,13 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
   const pct = tokenData ? (ttlLeft / (tokenData.ttlSeconds ?? TOKEN_TTL)) * 100 : 0;
   const barColor = pct > 50 ? 'var(--teal)' : pct > 20 ? 'var(--amber)' : 'var(--red)';
 
+  const SRow = ({ l, v, i }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--gray-50)' }}>
+      <span style={{ fontSize: '.75rem', color: 'var(--gray-400)', fontWeight: 600 }}>{i} {l}</span>
+      <span style={{ fontSize: '.8rem', fontWeight: 700, color: 'var(--navy)' }}>{v}</span>
+    </div>
+  );
+
   if (estado === 'completado') {
     return (
       <div className={s.tokenBanner} style={{ borderColor: 'var(--green)', background: 'rgba(16,185,129,.06)' }}>
@@ -424,42 +464,86 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
   }
 
   return (
-    <div className={s.tokenBanner}>
-      <div className={s.tokenBannerRow}>
-        <span className={s.tokenIco}>✍️</span>
-        <div style={{ flex: 1 }}>
-          <div className={s.tokenTitle}>Firma digital de rúbrica</div>
-          <div className={s.tokenSub}>Genere el token y entrégueselo al accionista para que lo ingrese en la tablet de firma.</div>
-        </div>
-        {(estado === 'idle' || estado === 'expirado') && (
-          <Button variant={estado === 'expirado' ? 'secondary' : 'teal'} size="sm" onClick={generar} style={{ flexShrink: 0 }}>
-            {estado === 'expirado' ? '🔄 Regenerar token' : '🔑 Generar token'}
-          </Button>
+    <>
+      <Modal 
+        isOpen={showSummary} 
+        onClose={() => setShowSummary(false)} 
+        title="Resumen de Información"
+        footer={(
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" onClick={() => setShowSummary(false)}>Regresar</Button>
+            <Button variant="teal" onClick={generar}>✅ Confirmar y Generar Token</Button>
+          </div>
         )}
-        {estado === 'generando' && <Spinner size="sm" />}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <Alert type="info">Verifique que la siguiente información sea correcta antes de proceder con el token de firma.</Alert>
+          
+          <div>
+            <SectionTitle icon="⚖️">Relación con Bantrab</SectionTitle>
+            <SRow l="¿Es Proveedor?" v={summary.conflicto?.proveedor ? 'SÍ' : 'NO'} />
+            <SRow l="¿Es Empleado?" v={summary.conflicto?.empleado ? 'SÍ' : 'NO'} />
+            <SRow l="¿Tiene Parentesco?" v={summary.conflicto?.pariente ? 'SÍ' : 'NO'} />
+          </div>
+
+          <div>
+            <SectionTitle icon="♿">Limitaciones Funcionales</SectionTitle>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              {summary.limitaciones.length === 0 && <span style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>Ninguna</span>}
+              {summary.limitaciones.map(l => <Tag key={l} color="teal">{l}</Tag>)}
+              {summary.enfermedad && <Tag color="amber">{summary.enfermedad.toUpperCase()}</Tag>}
+            </div>
+          </div>
+
+          <div>
+            <SectionTitle icon="🤝">Acompañante</SectionTitle>
+            {summary.acompanante ? (
+              <SRow l="Nombre" v={summary.acompanante.nombre} />
+            ) : (
+              <span style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>Sin acompañante registrado</span>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      <div className={s.tokenBanner}>
+        <div className={s.tokenBannerRow}>
+          <span className={s.tokenIco}>✍️</span>
+          <div style={{ flex: 1 }}>
+            <div className={s.tokenTitle}>Firma digital de rúbrica</div>
+            <div className={s.tokenSub}>Genere el token y entrégueselo al accionista para que lo ingrese en la tablet de firma.</div>
+          </div>
+          {(estado === 'idle' || estado === 'expirado') && (
+            <Button variant={estado === 'expirado' ? 'secondary' : 'teal'} size="sm" onClick={() => setShowSummary(true)} style={{ flex_shrink: 0 }}>
+              {estado === 'expirado' ? '🔄 Regenerar token' : '🔑 Generar token'}
+            </Button>
+          )}
+          {estado === 'generando' && <Spinner size="sm" />}
+        </div>
+        {errorMsg && <div style={{ marginTop: 8, fontSize: '.73rem', color: 'var(--red)', paddingLeft: 36 }}>⚠️ {errorMsg}</div>}
+        {estado === 'activo' && tokenData && (
+          <div className={s.tokenBody}>
+            <div className={s.tokenCode}>
+              {tokenData.token.split('').map((d, i) => <span key={i} className={s.tokenDigit}>{d}</span>)}
+            </div>
+            <div className={s.tokenTtlRow}>
+              <span className={s.tokenTtlLabel}>Vigencia</span>
+              <span className={s.tokenTtlVal} style={{ color: barColor }}>{fmtTtl(ttlLeft)}</span>
+              <div className={s.tokenBar}><div className={s.tokenBarFill} style={{ width: `${pct}%`, background: barColor }} /></div>
+            </div>
+            <div style={{ fontSize: '.68rem', color: 'var(--gray-400)', marginTop: 6, textAlign: 'center' }}>Esperando que el accionista firme en la tablet…</div>
+          </div>
+        )}
+        {estado === 'expirado' && (
+          <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(239,68,68,.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,.2)', fontSize: '.73rem', color: 'var(--red)' }}>
+            ⏱ El token expiró. Regenere uno nuevo para que el accionista pueda firmar.
+          </div>
+        )}
       </div>
-      {errorMsg && <div style={{ marginTop: 8, fontSize: '.73rem', color: 'var(--red)', paddingLeft: 36 }}>⚠️ {errorMsg}</div>}
-      {estado === 'activo' && tokenData && (
-        <div className={s.tokenBody}>
-          <div className={s.tokenCode}>
-            {tokenData.token.split('').map((d, i) => <span key={i} className={s.tokenDigit}>{d}</span>)}
-          </div>
-          <div className={s.tokenTtlRow}>
-            <span className={s.tokenTtlLabel}>Vigencia</span>
-            <span className={s.tokenTtlVal} style={{ color: barColor }}>{fmtTtl(ttlLeft)}</span>
-            <div className={s.tokenBar}><div className={s.tokenBarFill} style={{ width: `${pct}%`, background: barColor }} /></div>
-          </div>
-          <div style={{ fontSize: '.68rem', color: 'var(--gray-400)', marginTop: 6, textAlign: 'center' }}>Esperando que el accionista firme en la tablet…</div>
-        </div>
-      )}
-      {estado === 'expirado' && (
-        <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(239,68,68,.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,.2)', fontSize: '.73rem', color: 'var(--red)' }}>
-          ⏱ El token expiró. Regenere uno nuevo para que el accionista pueda firmar.
-        </div>
-      )}
-    </div>
+    </>
   );
 }
+
 
 // ── Sección Firma Digital + Confirmar Acreditación ────────────
 function SeccionFirma({ acc, asmIds }) {
@@ -538,6 +622,15 @@ export default function ParticipacionForm({ acc }) {
   const [inversiones, setInv] = useState([]);
   const [loadingAsm, setLoadingAsm] = useState(true);
 
+  // Estados lift-up para condicionales
+  const [seleccionadas, setSelec] = useState([]);
+  const [original, setOriginal] = useState([]);
+  const [enfermedad, setEnfermedad] = useState('');
+  const [enfOriginal, setEnfOrig] = useState('');
+
+  const hasLimitaciones = seleccionadas.length > 0 || enfermedad !== '';
+
+
   useEffect(() => {
     Promise.all([
       getAsambleasActivas(),
@@ -566,12 +659,26 @@ export default function ParticipacionForm({ acc }) {
   return (
     <div>
       <div className={s.sections}>
-        <SeccionLimitacion acc={acc} asmIds={selected} />
-        <hr className={s.hr} />
-        <SeccionAcompanante acc={acc} asmIds={selected} />
+        <SeccionLimitacion 
+          acc={acc} 
+          asmIds={selected} 
+          seleccionadas={seleccionadas} setSelec={setSelec}
+          enfermedad={enfermedad} setEnfermedad={setEnfermedad}
+          original={original} setOriginal={setOriginal}
+          enfOriginal={enfOriginal} setEnfOrig={setEnfOrig}
+        />
+        
+        {hasLimitaciones && (
+          <div className={s.reveal}>
+            <hr className={s.hr} />
+            <SeccionAcompanante acc={acc} asmIds={selected} />
+          </div>
+        )}
+
         <hr className={s.hr} />
         <SeccionFirma acc={acc} asmIds={selected} />
       </div>
     </div>
   );
+
 }

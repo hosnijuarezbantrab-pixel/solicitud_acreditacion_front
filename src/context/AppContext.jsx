@@ -3,11 +3,14 @@ const init = {
   usuario: { nombre:'JLOPEZ', agencia:'AGN-001', agencia_nombre:'Agencia Central' },
   accionista: null, accionistaLoading: false, accionistaError: null,
   notifications: [],
+  summary: { conflicto: null, limitaciones: [], enfermedad: '', acompanante: null },
 };
 export const A = {
   SET_ACC:'SET_ACC', CLEAR_ACC:'CLEAR_ACC', ACC_LOADING:'ACC_LOADING', ACC_ERROR:'ACC_ERROR',
   ADD_NOTIF:'ADD_NOTIF', DEL_NOTIF:'DEL_NOTIF',
+  SET_SUMMARY:'SET_SUMMARY',
 };
+
 function reducer(s, {type:t,payload:p}) {
   switch(t){
     case A.SET_ACC:      return{...s,accionista:p,accionistaLoading:false,accionistaError:null};
@@ -16,6 +19,7 @@ function reducer(s, {type:t,payload:p}) {
     case A.ACC_ERROR:    return{...s,accionistaError:p,accionistaLoading:false};
     case A.ADD_NOTIF:    return{...s,notifications:[...s.notifications,{id:Date.now(),...p}]};
     case A.DEL_NOTIF:    return{...s,notifications:s.notifications.filter(n=>n.id!==p)};
+    case A.SET_SUMMARY:  return{...s,summary:{...s.summary,...p}};
     default: return s;
   }
 }
@@ -31,6 +35,10 @@ export function AppProvider({children}) {
     dispatch({type:A.ADD_NOTIF,payload:{id,type,message}});
     setTimeout(()=>dispatch({type:A.DEL_NOTIF,payload:id}), ms);
   }, []);
-  return <Ctx.Provider value={{state,dispatch,notify}}>{children}</Ctx.Provider>;
+  const setSummary = useCallback((data) => {
+    dispatch({type:A.SET_SUMMARY,payload:data});
+  }, []);
+  return <Ctx.Provider value={{state,dispatch,notify,setSummary}}>{children}</Ctx.Provider>;
 }
+
 export const useApp = () => { const c=useContext(Ctx); if(!c) throw new Error('useApp outside provider'); return c; };

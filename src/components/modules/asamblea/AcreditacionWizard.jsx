@@ -317,12 +317,13 @@ function PantallaResultado({ resultado, onReset }) {
           </table>
         </CardBody>
       </Card>
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-        <Button variant="teal" size="lg" onClick={onReset} style={{ width: 'auto', padding: '12px 28px' }}>
+      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+        <Button variant="teal" size="xl" onClick={onReset}>
           ← Nueva Consulta
         </Button>
-        <Button variant="secondary">🖨️ Imprimir</Button>
+        <Button variant="secondary" size="xl">🖨️ Imprimir</Button>
       </div>
+
     </div>
   );
 }
