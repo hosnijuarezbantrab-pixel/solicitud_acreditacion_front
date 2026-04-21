@@ -439,26 +439,14 @@ function SeccionAcompanante({ acc, asmIds }) {
   );
 }
 
-        )}
-{
-  estado === 'expirado' && (
-    <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(239,68,68,.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,.2)', fontSize: '.73rem', color: 'var(--red)' }}>
-      ⏱ El token expiró. Regenere uno nuevo para que el accionista pueda firmar.
-    </div>
-  )
-}
-      </div >
-    </>
-  );
-}
-
-
 // ── Sección Firma Digital + Confirmar Acreditación ────────────
 function SeccionFirma({ acc, asmIds }) {
   const { notify } = useApp();
   const [confirm, setConfirm] = useState(false);
+  const [firmaOk, setFirmaOk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const solicitudId = useRef(genRef('SOL')).current;
 
   async function handleConfirmar() {
     if (!asmIds.length) { notify('error', 'Seleccione al menos una asamblea.'); return; }
