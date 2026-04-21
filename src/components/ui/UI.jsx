@@ -19,8 +19,14 @@ export function Alert({type='info',children,className='',style}){
 export function Tag({children,color='teal',className=''}){return <span className={[s.tag,s[`tg-${color}`],className].join(' ')}>{children}</span>;}
 export function Chip({children,color='green'}){return <span className={[s.chip,s[`ch-${color}`]].join(' ')}>{children}</span>;}
 export function Toggle({checked,onChange,disabled=false}){
-  return(<button type="button" role="switch" aria-checked={checked} disabled={disabled}
-    className={[s.toggle,checked?s.ton:''].join(' ')} onClick={()=>onChange(!checked)}/>);}
+  return(
+    <button type="button" role="switch" aria-checked={checked} disabled={disabled}
+      className={[s.toggle,checked?s.ton:''].join(' ')} onClick={()=>onChange(!checked)}>
+      <span className={s.tTxt}>{checked ? 'SI' : 'NO'}</span>
+    </button>
+  );
+}
+
 export function Checkbox({label,subLabel,checked,onChange}){
   return(<div className={[s.chkW,checked?s.chkWon:''].join(' ')} onClick={()=>onChange(!checked)}
     role="checkbox" aria-checked={checked} tabIndex={0} onKeyDown={e=>e.key===' '&&onChange(!checked)}>
@@ -31,3 +37,19 @@ export function MiniCheck({checked,onChange}){
     onClick={e=>{e.stopPropagation();onChange(!checked);}} role="checkbox" aria-checked={checked} tabIndex={0}/>);}
 export function Spinner({size='md'}){return <span className={[s.spin,s[`spin-${size}`]].join(' ')} aria-label="Cargando"/>;}
 export function Divider(){return <hr className={s.div}/>;}
+export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }) {
+  if (!isOpen) return null;
+  return (
+    <div className={s.mOver} onClick={onClose}>
+      <div className={[s.mCont, s[`m-${size}`]].join(' ')} onClick={e => e.stopPropagation()}>
+        <div className={s.mHdr}>
+          <div className={s.mTtl}>{title}</div>
+          <button className={s.mCls} onClick={onClose}>✕</button>
+        </div>
+        <div className={s.mBody}>{children}</div>
+        {footer && <div className={s.mFtr}>{footer}</div>}
+      </div>
+    </div>
+  );
+}
+

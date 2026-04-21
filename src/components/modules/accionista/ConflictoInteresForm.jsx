@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
 import { Button, Input, Select, Alert, Toggle } from '../../ui/UI.jsx';
 import { SectionTitle, FieldRow } from '../../ui/Card.jsx';
 import { actualizarConflictoInteres } from '../../../services/api.js';
@@ -18,11 +19,15 @@ function Seccion({ title, sub, on, onChange, children }) {
 }
 
 export default function ConflictoInteresForm({ acc }) {
-  const { notify } = useApp();
+  const { notify, setSummary } = useApp();
   const [prov, setProv] = useState(acc.proveedor_bantrab === 'S');
   const [emp, setEmp] = useState(acc.empleado_bantrab === 'S');
   const [par, setPar] = useState(acc.pariente_id === 'S');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setSummary({ conflicto: { proveedor: prov, empleado: emp, pariente: par } });
+  }, [prov, emp, par, setSummary]);
 
   async function handleSave() {
     setSaving(true);
@@ -34,9 +39,10 @@ export default function ConflictoInteresForm({ acc }) {
   }
 
   return (
+
     <div>
-      <Alert type="warning">Esta información es requerida por normativa interna. Los campos adicionales se habilitan según la respuesta seleccionada.</Alert>
       <SectionTitle icon="⚖️">Relación con Bantrab</SectionTitle>
+      <Alert type="warning">Esta información es requerida por normativa interna. Los campos adicionales se habilitan según la respuesta seleccionada.</Alert>
       <Seccion title="¿Es proveedor de Bantrab?" sub="Incluye cualquier tipo de servicio o producto" on={prov} onChange={setProv}>
         <FieldRow cols={2}><Input label="Nombre / Razón Social *" placeholder="Razón social" /><Input label="Producto o Servicio *" placeholder="Descripción" /></FieldRow>
         <FieldRow cols={2}><Input label="Monto Aproximado (Q) *" type="number" placeholder="0.00" /><Select label="Frecuencia *"><option>Mensual</option><option>Trimestral</option><option>Anual</option></Select></FieldRow>

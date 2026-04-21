@@ -1,84 +1,75 @@
-/* ── Page Header ───────────────────────────────────────── */
 .hdrRow {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 26px;
-    gap: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  gap: 24px;
 }
 
 .breadcrumb {
-    font-size: .67rem;
-    color: var(--gray-400);
-    margin-bottom: 7px;
-    font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  margin-bottom: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .title {
-    font-size: 1.9rem;
-    font-weight: 800;
-    line-height: 1.15;
-    margin-bottom: 4px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -1px;
 }
 
-.tDark  { color: var(--navy); }
-.tTeal  { color: var(--teal-dk); }
-.tGold  { color: var(--gold-dk); }
-.subtitle { font-size: .75rem; color: var(--gray-400); }
+.tDark { color: var(--navy); }
+.tTeal { color: var(--teal); }
+.tGold { color: var(--gold); }
 
 /* ── Tabs Bar ──────────────────────────────────────────── */
 .tabsBar {
-    display: flex;
-    gap: 0;
-    background: var(--white);
-    border-radius: 50px;
-    padding: 5px 6px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05);
-    width: fit-content;
-    border: 1px solid var(--gray-100);
+  display: flex;
+  gap: 8px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-md);
+  width: fit-content;
+  border: 1px solid var(--gray-100);
 }
 
-/* Tab individual */
 .tab {
-    padding: 9px 28px;
-    border-radius: 50px;
-    font-size: .75rem;
-    font-weight: 600;
-    color: var(--gray-500);
-    cursor: pointer;
-    transition: all .2s cubic-bezier(.4, 0, .2, 1);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    border: none;
-    background: transparent;
-    font-family: var(--font);
-    letter-spacing: .1px;
-    position: relative;
+  padding: 12px 32px;
+  border-radius: var(--radius-lg);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
 }
 
 .tab:hover:not(.tabAct) {
-    color: var(--navy);
-    background: var(--gray-50);
+  color: var(--navy);
+  background: var(--gray-50);
 }
 
-/* Tab activo */
 .tabAct {
-    background: var(--teal, #00bfa5);
-    color: #fff;
-    box-shadow: 0 3px 12px rgba(0, 191, 165, .38);
-    font-weight: 700;
+  background: var(--teal);
+  color: white;
+  box-shadow: 0 10px 20px -5px rgba(13, 148, 136, 0.4);
 }
 
-.tabAct:hover {
-    background: var(--teal-dk, #00897b);
-}
-
-/* ── Divisor entre secciones del tab "datos" ─────────── */
 .tabDivider {
-    height: 1px;
-    background: var(--gray-100);
-    margin: 24px 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--gray-100), var(--gray-200), var(--gray-100));
+  margin: 40px 0;
 }
+

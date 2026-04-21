@@ -13,7 +13,7 @@ import { useApp, A } from '../context/AppContext.jsx';
 import s from './ConsultaPage.module.css';
 
 const TABS = [
-  { key: 'datos', label: 'Actualización de Datos', icon: '✏️' },
+  { key: 'datos', label: 'Rectificación de Datos de Contacto', icon: '✏️' },
   { key: 'acreditacion', label: 'Solicitud de Acreditación', icon: '🎫' },
   { key: 'titulos', label: 'Títulos Pendientes', icon: '📜' },
 ];
@@ -62,8 +62,9 @@ export default function ConsultaPage() {
           </h1>
         </div>
         {accionista && (
-          <Button variant="secondary" onClick={handleReset}>🔄 Nueva Consulta</Button>
+          <Button variant="secondary" size="lg" onClick={handleReset}>🔄 Nueva Consulta</Button>
         )}
+
       </div>
 
       {/* ── Buscador por DPI ── */}
