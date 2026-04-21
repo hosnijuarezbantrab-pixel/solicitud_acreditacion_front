@@ -294,8 +294,8 @@ function SeccionAcompanante({ acc, asmIds }) {
     const firstAsmId = asmIds.length > 0 ? asmIds[0] : null;
     if (!firstAsmId) { setAcomps([]); return; }
     getAcompanante(acc.codigo, firstAsmId)
-      .then(res => { 
-        if (mounted) setAcomps(res ? [res] : []); 
+      .then(res => {
+        if (mounted) setAcomps(res ? [res] : []);
       })
       .catch(() => { if (mounted) setAcomps([]); });
     return () => { mounted = false; };
@@ -318,8 +318,8 @@ function SeccionAcompanante({ acc, asmIds }) {
       // Nota: Aquí se asume que la API permite agregar. 
       // Por simplicidad en mocks, enviamos la solicitud.
       await Promise.all(asmIds.map(id => guardarAcompanante(acc.codigo, id, candidato.codigo)));
-      setAcomps(prev => [...prev, candidato]); 
-      setCandidato(null); 
+      setAcomps(prev => [...prev, candidato]);
+      setCandidato(null);
       setDpiInput('');
       notify('success', 'Acompañante accionista registrado correctamente.');
     } catch (e) { notify('error', e.message); }
@@ -330,7 +330,7 @@ function SeccionAcompanante({ acc, asmIds }) {
     setEliminando(true);
     try {
       await Promise.all(asmIds.map(id => eliminarAcompanante(acc.codigo, id)));
-      setAcomps(prev => prev.filter(a => a.codigo !== codigo)); 
+      setAcomps(prev => prev.filter(a => a.codigo !== codigo));
       notify('success', 'Acompañante removido.');
     } catch (e) { notify('error', e.message); }
     finally { setEliminando(false); }
@@ -360,7 +360,7 @@ function SeccionAcompanante({ acc, asmIds }) {
       </div>
 
       <Alert type="info" style={{ marginBottom: 16 }}>
-        El acompañante debe ser un accionista acreditado. Puede agregar hasta 2 acompañantes.
+        El acompañante debe ser un accionista. Puede agregar hasta 2 acompañantes.
       </Alert>
 
       {acompanantes.length > 0 && (
@@ -667,10 +667,7 @@ function SeccionFirma({ acc, asmIds }) {
 
   return (
     <div>
-      <SectionTitle icon="✍️">Firma Digital de Rúbrica</SectionTitle>
-      <FirmaTokenBanner acc={acc} solicitudId={solicitudId} onFirmaCompletada={() => setFirmaOk(true)} />
-
-      <div style={{ marginTop: 16, marginBottom: 16 }}>
+      <div style={{ marginBottom: 20 }}>
         <Checkbox
           label={<>Confirmo que deseo acreditar a <strong>{acc.nombre}</strong> en la(s) asamblea(s) activa(s).</>}
           checked={confirm}
@@ -678,19 +675,12 @@ function SeccionFirma({ acc, asmIds }) {
         />
       </div>
 
-      {!firmaOk && (
-        <Alert type="warning" style={{ marginBottom: 12 }}>
-          El botón de confirmación se habilitará una vez que el accionista complete la firma en la tablet.
-        </Alert>
-      )}
-
-      <hr style={{ border: 'none', borderTop: '1.5px solid var(--gray-100)', margin: '16px 0' }} />
       <div style={{ display: 'flex', gap: 10 }}>
         <Button
           id="btn-confirmar-acreditacion"
           variant="teal"
           size="lg"
-          disabled={!confirm || !firmaOk || saving}
+          disabled={!confirm || saving}
           loading={saving}
           onClick={handleConfirmar}
           style={{ width: 'auto', padding: '12px 32px' }}
