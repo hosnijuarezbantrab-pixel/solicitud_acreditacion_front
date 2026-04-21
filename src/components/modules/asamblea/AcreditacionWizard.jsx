@@ -222,9 +222,6 @@ function PantallaConfirmar({ acc, asambleas, solicitudId, onConfirmar, saving, o
       {asambleas.map(a => (
         <div key={a.id} className={s.asmConfirm}>
           <Tag color="green">✓ Activa</Tag>
-          <span className={[s.asmPill, a.tipo === 'O' ? s.pOrd : s.pExt].join(' ')}>
-            {a.descripcion}
-          </span>
           <span className={s.asmConfirmName}>{a.num} — {a.ordinal}</span>
           <span style={{ marginLeft: 'auto', fontFamily: 'monospace', fontSize: '.68rem', color: 'var(--gray-400)' }}>
             {a.fecha}
