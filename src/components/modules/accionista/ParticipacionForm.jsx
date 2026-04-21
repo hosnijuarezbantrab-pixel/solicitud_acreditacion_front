@@ -439,194 +439,15 @@ function SeccionAcompanante({ acc, asmIds }) {
   );
 }
 
-// ── Banner de token de firma ─────────────────────────────────
-const TOKEN_TTL = 300;
-
-function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
-  const { state } = useApp();
-  const { summary } = state;
-  const { notify } = useApp();
-  const [showSummary, setShowSummary] = useState(false);
-  const [tokenData, setTokenData] = useState(null);
-  const [estado, setEstado] = useState('idle');
-  const [ttlLeft, setTtlLeft] = useState(0);
-  const [errorMsg, setErrorMsg] = useState('');
-
-  const needsCompanion = summary.limitaciones?.includes('MOV') && (!summary.acompanantes || summary.acompanantes.length === 0);
-  const intervalRef = useRef(null);
-  const pollRef = useRef(null);
-
-  const startCountdown = useCallback((seconds) => {
-    // ... countdown logic (same as before)
-    clearInterval(intervalRef.current);
-    setTtlLeft(seconds);
-    intervalRef.current = setInterval(() => {
-      setTtlLeft(prev => {
-        if (prev <= 1) { clearInterval(intervalRef.current); setEstado('expirado'); stopPoll(); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-  }, []);
-
-  const stopPoll = useCallback(() => clearInterval(pollRef.current), []);
-
-  const startPoll = useCallback((token, solId) => {
-    stopPoll();
-    pollRef.current = setInterval(async () => {
-      try {
-        const res = await consultarEstadoFirma(solId, token);
-        if (res.estado === 'USADO' || res.firmado) {
-          stopPoll(); clearInterval(intervalRef.current);
-          setEstado('completado'); onFirmaCompletada?.();
-        } else if (res.estado === 'EXPIRADO' || res.ttlRemainingSeconds === 0) {
-          stopPoll(); clearInterval(intervalRef.current);
-          setEstado('expirado'); setTtlLeft(0);
-        }
-      } catch { /* silencioso */ }
-    }, 5000);
-  }, [stopPoll, onFirmaCompletada]);
-
-  const generar = useCallback(async () => {
-    setShowSummary(false); // Cierra modal
-    setEstado('generando'); setErrorMsg('');
-    try {
-      const res = await generarTokenFirma({
-        solicitudId,
-        accionistaId: acc.codigo,
-        accionista: acc.nombre,
-        dpi: acc.dpi,
-        accionesComunes: acc.acciones_comunes,
-        accionesPreferentes: acc.acciones_preferentes_a,
-        dividendos: acc.dividendos ? `Q${Number(acc.dividendos).toLocaleString('es-GT', { minimumFractionDigits: 2 })}` : undefined,
-      });
-      setTokenData(res); setEstado('activo');
-      startCountdown(res.ttlSeconds ?? TOKEN_TTL);
-      startPoll(res.token, solicitudId);
-    } catch (e) { setErrorMsg(e.message || 'Error al generar el token.'); setEstado('idle'); }
-  }, [acc, solicitudId, startCountdown, startPoll]);
-
-  useEffect(() => () => { clearInterval(intervalRef.current); stopPoll(); }, [stopPoll]);
-
-  const fmtTtl = (sec) => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
-  const pct = tokenData ? (ttlLeft / (tokenData.ttlSeconds ?? TOKEN_TTL)) * 100 : 0;
-  const barColor = pct > 50 ? 'var(--teal)' : pct > 20 ? 'var(--amber)' : 'var(--red)';
-
-  const SRow = ({ l, v, i }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--gray-50)' }}>
-      <span style={{ fontSize: '.75rem', color: 'var(--gray-400)', fontWeight: 600 }}>{i} {l}</span>
-      <span style={{ fontSize: '.8rem', fontWeight: 700, color: 'var(--navy)' }}>{v}</span>
+        )}
+{
+  estado === 'expirado' && (
+    <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(239,68,68,.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,.2)', fontSize: '.73rem', color: 'var(--red)' }}>
+      ⏱ El token expiró. Regenere uno nuevo para que el accionista pueda firmar.
     </div>
-  );
-
-  if (estado === 'completado') {
-    return (
-      <div className={s.tokenBanner} style={{ borderColor: 'var(--green)', background: 'rgba(16,185,129,.06)' }}>
-        <div className={s.tokenBannerRow}>
-          <span className={s.tokenIco}>✅</span>
-          <div style={{ flex: 1 }}>
-            <div className={s.tokenTitle} style={{ color: 'var(--green)' }}>Firma completada</div>
-            <div className={s.tokenSub}>El accionista registró su rúbrica correctamente en la tablet.</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <Modal
-        isOpen={showSummary}
-        onClose={() => setShowSummary(false)}
-        title="Resumen de Información"
-        footer={(
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setShowSummary(false)}>Regresar</Button>
-            <Button variant="teal" onClick={generar}>✅ Confirmar y Generar Token</Button>
-          </div>
-        )}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <Alert type="info">Verifique que la siguiente información sea correcta antes de proceder con el token de firma.</Alert>
-
-          <div>
-            <SectionTitle icon="⚖️">Relación con Bantrab</SectionTitle>
-            <SRow l="¿Es Proveedor?" v={summary.conflicto?.proveedor ? 'SÍ' : 'NO'} />
-            <SRow l="¿Es Empleado?" v={summary.conflicto?.empleado ? 'SÍ' : 'NO'} />
-            <SRow l="¿Tiene Parentesco?" v={summary.conflicto?.pariente ? 'SÍ' : 'NO'} />
-          </div>
-
-          <div>
-            <SectionTitle icon="♿">Limitaciones Funcionales</SectionTitle>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-              {summary.limitaciones.length === 0 && <span style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>Ninguna</span>}
-              {summary.limitaciones.map(l => <Tag key={l} color="teal">{l}</Tag>)}
-              {summary.tipoMovilidad && <Tag color="teal">MOV: {summary.tipoMovilidad.toUpperCase()}</Tag>}
-              {summary.parentezcoAcomp && <Tag color="teal">PAR: {summary.parentezcoAcomp.toUpperCase()}</Tag>}
-              {summary.enfermedad && <Tag color="amber">{summary.enfermedad.toUpperCase()}</Tag>}
-            </div>
-          </div>
-
-          <div>
-            <SectionTitle icon="🤝">Acompañantes ({summary.acompanantes?.length || 0})</SectionTitle>
-            {summary.acompanantes?.length > 0 ? (
-              summary.acompanantes.map((a, i) => (
-                <SRow key={i} l={`Acompañante ${i + 1}`} v={a.nombre} />
-              ))
-            ) : (
-              <span style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>Sin acompañantes registrados</span>
-            )}
-          </div>
-        </div>
-      </Modal>
-
-      <div className={s.tokenBanner}>
-        <div className={s.tokenBannerRow}>
-          <span className={s.tokenIco}>✍️</span>
-          <div style={{ flex: 1 }}>
-            <div className={s.tokenTitle}>Firma digital de rúbrica</div>
-            <div className={s.tokenSub}>Genere el token y entrégueselo al accionista para que lo ingrese en la tablet de firma.</div>
-          </div>
-          {(estado === 'idle' || estado === 'expirado') && (
-            <Button
-              variant={needsCompanion ? 'ghost' : (estado === 'expirado' ? 'secondary' : 'teal')}
-              size="sm"
-              disabled={needsCompanion}
-              onClick={() => setShowSummary(true)}
-              style={{ flex_shrink: 0, opacity: needsCompanion ? .5 : 1 }}
-            >
-              {estado === 'expirado' ? '🔄 Regenerar token' : '🔑 Generar token'}
-            </Button>
-          )}
-          {estado === 'generando' && <Spinner size="sm" />}
-        </div>
-
-        {needsCompanion && (
-          <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 10, fontSize: '.73rem', color: '#991b1b', display: 'flex', gap: 10, alignItems: 'center' }}>
-            <span>⚠️</span>
-            <span><strong>Requerimiento de Seguridad:</strong> El accionista posee limitaciones de movilidad. Es obligatorio registrar al menos un <strong>acompañante</strong> para habilitar la firma digital.</span>
-          </div>
-        )}
-
-        {errorMsg && <div style={{ marginTop: 8, fontSize: '.73rem', color: 'var(--red)', paddingLeft: 36 }}>⚠️ {errorMsg}</div>}
-        {estado === 'activo' && tokenData && (
-          <div className={s.tokenBody}>
-            <div className={s.tokenCode}>
-              {tokenData.token.split('').map((d, i) => <span key={i} className={s.tokenDigit}>{d}</span>)}
-            </div>
-            <div className={s.tokenTtlRow}>
-              <span className={s.tokenTtlLabel}>Vigencia</span>
-              <span className={s.tokenTtlVal} style={{ color: barColor }}>{fmtTtl(ttlLeft)}</span>
-              <div className={s.tokenBar}><div className={s.tokenBarFill} style={{ width: `${pct}%`, background: barColor }} /></div>
-            </div>
-            <div style={{ fontSize: '.68rem', color: 'var(--gray-400)', marginTop: 6, textAlign: 'center' }}>Esperando que el accionista firme en la tablet…</div>
-          </div>
-        )}
-        {estado === 'expirado' && (
-          <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(239,68,68,.06)', borderRadius: 8, border: '1px solid rgba(239,68,68,.2)', fontSize: '.73rem', color: 'var(--red)' }}>
-            ⏱ El token expiró. Regenere uno nuevo para que el accionista pueda firmar.
-          </div>
-        )}
-      </div>
+  )
+}
+      </div >
     </>
   );
 }
@@ -636,10 +457,8 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
 function SeccionFirma({ acc, asmIds }) {
   const { notify } = useApp();
   const [confirm, setConfirm] = useState(false);
-  const [firmaOk, setFirmaOk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
-  const solicitudId = useRef(genRef('SOL')).current;
 
   async function handleConfirmar() {
     if (!asmIds.length) { notify('error', 'Seleccione al menos una asamblea.'); return; }
