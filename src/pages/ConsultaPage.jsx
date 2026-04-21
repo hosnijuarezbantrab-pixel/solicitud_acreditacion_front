@@ -58,7 +58,7 @@ export default function ConsultaPage() {
           <h1 className={s.title}>
             <span className={s.tDark}>Módulo&nbsp;</span>
             <span className={s.tTeal}>de&nbsp;</span>
-            <span className={s.tGold}>Accionistas</span>
+            <span className={s.tGold}>Asambleas</span>
           </h1>
         </div>
         {accionista && (

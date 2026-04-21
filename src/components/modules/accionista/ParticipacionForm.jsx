@@ -47,7 +47,7 @@ function LimitacionSelector({ opciones, seleccionadas, onChange, disabled }) {
             aria-pressed={on}
           >
             <span className={s.limitIco} aria-hidden>
-              {op.codigo === 'AUD' ? '🦻' : op.codigo === 'VIS' ? '👁️' : op.codigo === 'MOV' ? '♿' : '🗣️'}
+              {op.codigo === 'AUD' ? '🦻' : op.codigo === 'VIS' ? '👁️' : op.codigo === 'MOV' ? '♿' : op.codigo === 'PAR' ? '👪' : op.codigo === 'ENF' ? '🩺' : '🗣️'}
             </span>
             {op.descripcion}
           </button>
@@ -58,14 +58,19 @@ function LimitacionSelector({ opciones, seleccionadas, onChange, disabled }) {
 }
 
 // ── Sección Limitación Funcional ──────────────────────────────
-function SeccionLimitacion({ acc, asmIds, seleccionadas, setSelec, enfermedad, setEnfermedad, original, setOriginal, enfOriginal, setEnfOrig }) {
+function SeccionLimitacion({
+  acc, asmIds, seleccionadas, setSelec, enfermedad, setEnfermedad,
+  tipoMovilidad, setTipoMovilidad, parentezcoAcomp, setParentezcoAcomp,
+  original, setOriginal, enfOriginal, setEnfOrig, movOriginal, setMovOrig,
+  parOriginal, setParOrig
+}) {
   const { notify, setSummary } = useApp();
   const [opcionesFull, setOpcionesFull] = useState([]);
-  
+
   // ... (inside SeccionLimitacion)
   useEffect(() => {
-    setSummary({ limitaciones: seleccionadas, enfermedad });
-  }, [seleccionadas, enfermedad, setSummary]);
+    setSummary({ limitaciones: seleccionadas, enfermedad, tipoMovilidad, parentezcoAcomp });
+  }, [seleccionadas, enfermedad, tipoMovilidad, parentezcoAcomp, setSummary]);
 
   const [opciones, setOpciones] = useState([]);
   const [observaciones, setObs] = useState('');
@@ -105,33 +110,59 @@ function SeccionLimitacion({ acc, asmIds, seleccionadas, setSelec, enfermedad, s
       setOriginal(finalLims);
       setObs(mergedObs);
       setObsOrig(mergedObs);
-      // Aquí se podría cargar el valor del backend si existiera
+
+      // Cargar tipo_movilidad y parentezco si existe en alguno de los registros
+      let mergedMov = '';
+      let mergedPar = '';
+      regs.forEach(reg => {
+        if (reg?.tipo_movilidad) mergedMov = reg.tipo_movilidad;
+        if (reg?.parentezco_acomp) mergedPar = reg.parentezco_acomp;
+      });
+      setTipoMovilidad(mergedMov);
+      setMovOrig(mergedMov);
+      setParentezcoAcomp(mergedPar);
+      setParOrig(mergedPar);
+
       setLoading(false);
     }).catch(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
   }, [acc.codigo, JSON.stringify(asmIds)]);
 
   const dirty = JSON.stringify(seleccionadas.slice().sort()) !== JSON.stringify(original.slice().sort())
-    || observaciones !== obsOriginal || enfermedad !== enfOriginal;
+    || observaciones !== obsOriginal || enfermedad !== enfOriginal || tipoMovilidad !== movOriginal || parentezcoAcomp !== parOriginal;
 
   async function handleGuardar() {
     setSaving(true);
     try {
       await Promise.all(
         asmIds.map(id =>
-          guardarLimitacionFuncional(acc.codigo, id, { limitaciones: seleccionadas, observaciones, enfermedad })
+          guardarLimitacionFuncional(acc.codigo, id, {
+            limitaciones: seleccionadas,
+            observaciones,
+            enfermedad,
+            tipo_movilidad: tipoMovilidad,
+            parentezco_acomp: parentezcoAcomp
+          })
         )
       );
       setOriginal(seleccionadas);
       setObsOrig(observaciones);
       setEnfOrig(enfermedad);
+      setMovOrig(tipoMovilidad);
+      setParOrig(parentezcoAcomp);
       notify('success', 'Limitación funcional guardada correctamente.');
     } catch (e) {
       notify('error', e.message);
     } finally { setSaving(false); }
   }
 
-  function handleDescartar() { setSelec(original); setObs(obsOriginal); setEnfermedad(enfOriginal); }
+  function handleDescartar() {
+    setSelec(original);
+    setObs(obsOriginal);
+    setEnfermedad(enfOriginal);
+    setTipoMovilidad(movOriginal);
+    setParentezcoAcomp(parOriginal);
+  }
 
   async function handleExportar() {
     setExporting(true);
@@ -160,33 +191,54 @@ function SeccionLimitacion({ acc, asmIds, seleccionadas, setSelec, enfermedad, s
         Registre las limitaciones funcionales del accionista si aplica.
       </Alert>
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 24 }}>
         <div style={{ flex: '0 1 auto' }}>
-          <LimitacionSelector opciones={opciones} seleccionadas={seleccionadas} onChange={setSelec} />
+          <LimitacionSelector opciones={opciones} seleccionadas={seleccionadas} onChange={next => {
+            setSelec(next);
+            if (!next.includes('MOV')) setTipoMovilidad('');
+            if (!next.includes('PAR')) setParentezcoAcomp('');
+            if (!next.includes('ENF')) setEnfermedad('');
+          }} />
         </div>
-        <div style={{ flex: '1 1 300px', maxWidth: '360px', marginLeft: 'auto' }}>
-          <Select label="Parentezco de Enfermedades" value={enfermedad} onChange={e => setEnfermedad(e.target.value)}>
-            <option value="">-- Seleccione --</option>
-            <option value="corazon">Corazón</option>
-            <option value="diabetes">Diabetes</option>
-            <option value="cancer">Cáncer</option>
-          </Select>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {seleccionadas.includes('ENF') && (
+            <div className={s.reveal}>
+              <Select label="Parentezco de Enfermedades" value={enfermedad} onChange={e => setEnfermedad(e.target.value)}>
+                <option value="">-- Seleccione --</option>
+                <option value="corazon">Corazón</option>
+                <option value="diabetes">Diabetes</option>
+                <option value="cancer">Cáncer</option>
+              </Select>
+            </div>
+          )}
+
+          {seleccionadas.includes('MOV') && (
+            <div className={s.reveal}>
+              <Select label="Tipo de Movilidad" value={tipoMovilidad} onChange={e => setTipoMovilidad(e.target.value)}>
+                <option value="">-- Seleccione opción --</option>
+                <option value="Silla de Ruedas">Silla de Ruedas</option>
+                <option value="Bastón">Bastón</option>
+                <option value="Muletas">Muletas</option>
+              </Select>
+            </div>
+          )}
+
+          {seleccionadas.includes('PAR') && (
+            <div className={s.reveal}>
+              <Select label="Vínculo de Parentezco" value={parentezcoAcomp} onChange={e => setParentezcoAcomp(e.target.value)}>
+                <option value="">-- Seleccione relación --</option>
+                <option value="hijo">Hijo</option>
+                <option value="conyugue">Conyugue</option>
+                <option value="nieto">Nieto</option>
+                <option value="hermano">Hermano</option>
+                <option value="padre">Padre</option>
+                <option value="madre">Madre</option>
+                <option value="otro">Otro</option>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
-
-
-      {seleccionadas.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <label className={s.obsLabel}>Observaciones (opcional)</label>
-          <textarea
-            className={s.obsInput} rows={2} maxLength={300}
-            placeholder="Información adicional sobre la limitación funcional…"
-            value={observaciones}
-            onChange={e => setObs(e.target.value)}
-          />
-          <div className={s.obsCount}>{observaciones.length}/300</div>
-        </div>
-      )}
 
       {dirty && (
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -208,7 +260,11 @@ function SeccionLimitacion({ acc, asmIds, seleccionadas, setSelec, enfermedad, s
           <span>Limitaciones registradas: </span>
           {original.map(c => {
             const op = opcionesFull.find(o => o.codigo === c);
-            return <Tag key={c} color="teal">{op?.descripcion ?? c}</Tag>;
+            let extra = '';
+            if (c === 'MOV' && movOriginal) extra = ` (${movOriginal})`;
+            if (c === 'PAR' && parOriginal) extra = ` (${parOriginal})`;
+            if (c === 'ENF' && enfOriginal) extra = ` (${enfOriginal})`;
+            return <Tag key={c} color="teal">{op?.descripcion ?? c}{extra}</Tag>;
           })}
         </div>
       )}
@@ -219,12 +275,11 @@ function SeccionLimitacion({ acc, asmIds, seleccionadas, setSelec, enfermedad, s
 // ── Sección Acompañante Accionista ───────────────────────────
 function SeccionAcompanante({ acc, asmIds }) {
   const { notify, setSummary } = useApp();
-  const [acompanante, setAcomp] = useState(undefined);
-  
-  // ... (inside SeccionAcompanante)
+  const [acompanantes, setAcomps] = useState(undefined);
+
   useEffect(() => {
-    setSummary({ acompanante });
-  }, [acompanante, setSummary]);
+    setSummary({ acompanantes });
+  }, [acompanantes, setSummary]);
 
   const [dpiInput, setDpiInput] = useState('');
   const [candidato, setCandidato] = useState(null);
@@ -237,10 +292,12 @@ function SeccionAcompanante({ acc, asmIds }) {
   useEffect(() => {
     let mounted = true;
     const firstAsmId = asmIds.length > 0 ? asmIds[0] : null;
-    if (!firstAsmId) { setAcomp(null); return; }
+    if (!firstAsmId) { setAcomps([]); return; }
     getAcompanante(acc.codigo, firstAsmId)
-      .then(res => { if (mounted) setAcomp(res ?? null); })
-      .catch(() => { if (mounted) setAcomp(null); });
+      .then(res => { 
+        if (mounted) setAcomps(res ? [res] : []); 
+      })
+      .catch(() => { if (mounted) setAcomps([]); });
     return () => { mounted = false; };
   }, [acc.codigo, JSON.stringify(asmIds)]);
 
@@ -255,20 +312,26 @@ function SeccionAcompanante({ acc, asmIds }) {
   }
 
   async function handleConfirmar() {
+    if (acompanantes.length >= 2) { notify('error', 'Solo se permiten hasta 2 acompañantes.'); return; }
     setConfirm(true);
     try {
+      // Nota: Aquí se asume que la API permite agregar. 
+      // Por simplicidad en mocks, enviamos la solicitud.
       await Promise.all(asmIds.map(id => guardarAcompanante(acc.codigo, id, candidato.codigo)));
-      setAcomp(candidato); setCandidato(null); setDpiInput('');
+      setAcomps(prev => [...prev, candidato]); 
+      setCandidato(null); 
+      setDpiInput('');
       notify('success', 'Acompañante accionista registrado correctamente.');
     } catch (e) { notify('error', e.message); }
     finally { setConfirm(false); }
   }
 
-  async function handleEliminar() {
+  async function handleEliminar(codigo) {
     setEliminando(true);
     try {
       await Promise.all(asmIds.map(id => eliminarAcompanante(acc.codigo, id)));
-      setAcomp(null); notify('success', 'Acompañante removido.');
+      setAcomps(prev => prev.filter(a => a.codigo !== codigo)); 
+      notify('success', 'Acompañante removido.');
     } catch (e) { notify('error', e.message); }
     finally { setEliminando(false); }
   }
@@ -288,48 +351,51 @@ function SeccionAcompanante({ acc, asmIds }) {
     finally { setExporting(false); }
   }
 
-  if (acompanante === undefined) return <div className={s.loadWrap}><Spinner /> Cargando datos…</div>;
+  if (acompanantes === undefined) return <div className={s.loadWrap}><Spinner /> Cargando datos…</div>;
 
   return (
     <div>
       <div className={s.secHeader}>
-        <SectionTitle icon="🤝">Acompañante Accionista</SectionTitle>
+        <SectionTitle icon="🤝">Acompañante Accionista ({acompanantes.length}/2)</SectionTitle>
       </div>
 
       <Alert type="info" style={{ marginBottom: 16 }}>
-        El acompañante debe ser un accionista existente y estar acreditado en la misma asamblea.
-        No puede ser el mismo accionista titular.
+        El acompañante debe ser un accionista acreditado. Puede agregar hasta 2 acompañantes.
       </Alert>
 
-      {acompanante && (
-        <div className={s.acompBox}>
-          <div className={s.acompAv} aria-hidden>
-            {(acompanante.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('') || '??').toUpperCase()}
-          </div>
-          <div className={s.acompInfo}>
-            <div className={s.acompNombre}>{acompanante.nombre}</div>
-            <div className={s.acompMeta}>
-              DPI {acompanante.dpi} &nbsp;·&nbsp; Expediente{' '}
-              <strong style={{ color: 'var(--teal-dk)' }}>{acompanante.expediente}</strong>
+      {acompanantes.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          {acompanantes.map((acompanante, idx) => (
+            <div key={acompanante.codigo || idx} className={s.acompBox}>
+              <div className={s.acompAv} aria-hidden>
+                {(acompanante.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('') || '??').toUpperCase()}
+              </div>
+              <div className={s.acompInfo}>
+                <div className={s.acompNombre}>{acompanante.nombre}</div>
+                <div className={s.acompMeta}>
+                  DPI {acompanante.dpi} &nbsp;·&nbsp; Expediente{' '}
+                  <strong style={{ color: 'var(--teal-dk)' }}>{acompanante.expediente}</strong>
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  <Tag color="green">✓ Acreditado</Tag>
+                  <Tag color="teal" className={s.tagGap}>{acompanante.codigo}</Tag>
+                </div>
+              </div>
+              <Button variant="danger" size="sm" loading={eliminando} onClick={() => handleEliminar(acompanante.codigo)} style={{ flexShrink: 0 }}>
+                ✕ Remover
+              </Button>
             </div>
-            <div style={{ marginTop: 6 }}>
-              <Tag color="green">✓ Acreditado</Tag>
-              <Tag color="teal" className={s.tagGap}>{acompanante.codigo}</Tag>
-            </div>
-          </div>
-          <Button variant="danger" size="sm" loading={eliminando} onClick={handleEliminar} style={{ flexShrink: 0 }}>
-            ✕ Remover
-          </Button>
+          ))}
         </div>
       )}
 
-      {!acompanante && (
+      {acompanantes.length < 2 && (
         <>
           <div className={s.dpiRow}>
             <div className={s.dpiWrap}>
               <input
                 type="text" inputMode="numeric" className={s.dpiInput}
-                placeholder="Ingrese DPI del acompañante (13 dígitos)"
+                placeholder="Ingrese DPI del nuevo acompañante"
                 maxLength={13} value={dpiInput}
                 onChange={e => { setDpiInput(e.target.value.replace(/\D/g, '')); setErrorMsg(''); setCandidato(null); }}
                 onKeyDown={e => e.key === 'Enter' && handleBuscar()}
@@ -346,7 +412,7 @@ function SeccionAcompanante({ acc, asmIds }) {
             <div className={s.candidatoBox}>
               <div className={s.candidatoHdr}>
                 <span className={s.candidatoIco} aria-hidden>👤</span>
-                <div className={s.candidatoTtl}>Accionista encontrado — confirme antes de asignar</div>
+                <div className={s.candidatoTtl}>Asignar nuevo acompañante</div>
               </div>
               <div className={s.candidatoDatos}>
                 <div className={s.candidatoCampo}><span className={s.candidatoLbl}>Nombre completo</span><span className={s.candidatoVal}>{candidato.nombre}</span></div>
@@ -364,8 +430,8 @@ function SeccionAcompanante({ acc, asmIds }) {
             </div>
           )}
 
-          {!candidato && !buscando && !errorMsg && (
-            <p className={s.emptyHint}>No se ha registrado ningún acompañante. Ingrese el DPI para buscar y asignar.</p>
+          {!candidato && !buscando && !errorMsg && acompanantes.length === 0 && (
+            <p className={s.emptyHint}>No se ha registrado ningún acompañante. Ingrese el DPI para buscar.</p>
           )}
         </>
       )}
@@ -379,11 +445,14 @@ const TOKEN_TTL = 300;
 function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
   const { state } = useApp();
   const { summary } = state;
+  const { notify } = useApp();
   const [showSummary, setShowSummary] = useState(false);
   const [tokenData, setTokenData] = useState(null);
   const [estado, setEstado] = useState('idle');
   const [ttlLeft, setTtlLeft] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const needsCompanion = summary.limitaciones?.includes('MOV') && (!summary.acompanantes || summary.acompanantes.length === 0);
   const intervalRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -465,9 +534,9 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
 
   return (
     <>
-      <Modal 
-        isOpen={showSummary} 
-        onClose={() => setShowSummary(false)} 
+      <Modal
+        isOpen={showSummary}
+        onClose={() => setShowSummary(false)}
         title="Resumen de Información"
         footer={(
           <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
@@ -478,7 +547,7 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <Alert type="info">Verifique que la siguiente información sea correcta antes de proceder con el token de firma.</Alert>
-          
+
           <div>
             <SectionTitle icon="⚖️">Relación con Bantrab</SectionTitle>
             <SRow l="¿Es Proveedor?" v={summary.conflicto?.proveedor ? 'SÍ' : 'NO'} />
@@ -491,16 +560,20 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
               {summary.limitaciones.length === 0 && <span style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>Ninguna</span>}
               {summary.limitaciones.map(l => <Tag key={l} color="teal">{l}</Tag>)}
+              {summary.tipoMovilidad && <Tag color="teal">MOV: {summary.tipoMovilidad.toUpperCase()}</Tag>}
+              {summary.parentezcoAcomp && <Tag color="teal">PAR: {summary.parentezcoAcomp.toUpperCase()}</Tag>}
               {summary.enfermedad && <Tag color="amber">{summary.enfermedad.toUpperCase()}</Tag>}
             </div>
           </div>
 
           <div>
-            <SectionTitle icon="🤝">Acompañante</SectionTitle>
-            {summary.acompanante ? (
-              <SRow l="Nombre" v={summary.acompanante.nombre} />
+            <SectionTitle icon="🤝">Acompañantes ({summary.acompanantes?.length || 0})</SectionTitle>
+            {summary.acompanantes?.length > 0 ? (
+              summary.acompanantes.map((a, i) => (
+                <SRow key={i} l={`Acompañante ${i + 1}`} v={a.nombre} />
+              ))
             ) : (
-              <span style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>Sin acompañante registrado</span>
+              <span style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>Sin acompañantes registrados</span>
             )}
           </div>
         </div>
@@ -514,12 +587,26 @@ function FirmaTokenBanner({ acc, solicitudId, onFirmaCompletada }) {
             <div className={s.tokenSub}>Genere el token y entrégueselo al accionista para que lo ingrese en la tablet de firma.</div>
           </div>
           {(estado === 'idle' || estado === 'expirado') && (
-            <Button variant={estado === 'expirado' ? 'secondary' : 'teal'} size="sm" onClick={() => setShowSummary(true)} style={{ flex_shrink: 0 }}>
+            <Button
+              variant={needsCompanion ? 'ghost' : (estado === 'expirado' ? 'secondary' : 'teal')}
+              size="sm"
+              disabled={needsCompanion}
+              onClick={() => setShowSummary(true)}
+              style={{ flex_shrink: 0, opacity: needsCompanion ? .5 : 1 }}
+            >
               {estado === 'expirado' ? '🔄 Regenerar token' : '🔑 Generar token'}
             </Button>
           )}
           {estado === 'generando' && <Spinner size="sm" />}
         </div>
+
+        {needsCompanion && (
+          <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 10, fontSize: '.73rem', color: '#991b1b', display: 'flex', gap: 10, alignItems: 'center' }}>
+            <span>⚠️</span>
+            <span><strong>Requerimiento de Seguridad:</strong> El accionista posee limitaciones de movilidad. Es obligatorio registrar al menos un <strong>acompañante</strong> para habilitar la firma digital.</span>
+          </div>
+        )}
+
         {errorMsg && <div style={{ marginTop: 8, fontSize: '.73rem', color: 'var(--red)', paddingLeft: 36 }}>⚠️ {errorMsg}</div>}
         {estado === 'activo' && tokenData && (
           <div className={s.tokenBody}>
@@ -627,8 +714,12 @@ export default function ParticipacionForm({ acc }) {
   const [original, setOriginal] = useState([]);
   const [enfermedad, setEnfermedad] = useState('');
   const [enfOriginal, setEnfOrig] = useState('');
+  const [tipoMovilidad, setTipoMovilidad] = useState('');
+  const [movOriginal, setMovOrig] = useState('');
+  const [parentezcoAcomp, setParentezcoAcomp] = useState('');
+  const [parOriginal, setParOrig] = useState('');
 
-  const hasLimitaciones = seleccionadas.length > 0 || enfermedad !== '';
+  const hasLimitaciones = seleccionadas.length > 0 || enfermedad !== '' || tipoMovilidad !== '' || parentezcoAcomp !== '';
 
 
   useEffect(() => {
@@ -659,15 +750,19 @@ export default function ParticipacionForm({ acc }) {
   return (
     <div>
       <div className={s.sections}>
-        <SeccionLimitacion 
-          acc={acc} 
-          asmIds={selected} 
+        <SeccionLimitacion
+          acc={acc}
+          asmIds={selected}
           seleccionadas={seleccionadas} setSelec={setSelec}
           enfermedad={enfermedad} setEnfermedad={setEnfermedad}
+          tipoMovilidad={tipoMovilidad} setTipoMovilidad={setTipoMovilidad}
+          parentezcoAcomp={parentezcoAcomp} setParentezcoAcomp={setParentezcoAcomp}
           original={original} setOriginal={setOriginal}
           enfOriginal={enfOriginal} setEnfOrig={setEnfOrig}
+          movOriginal={movOriginal} setMovOrig={setMovOrig}
+          parOriginal={parOriginal} setParOrig={setParOrig}
         />
-        
+
         {hasLimitaciones && (
           <div className={s.reveal}>
             <hr className={s.hr} />

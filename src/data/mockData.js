@@ -20,13 +20,13 @@ export const MOCK_ACCIONISTA = {
 
 export const MOCK_ASAMBLEAS = [
   {
-    id: 1, num: 'ASM-2025-01', tipo: 'O', descripcion: '',
+    id: 1, num: 'ASM-2025-01', tipo: 'O',
     ordinal: 'LVIV Asamblea General Ordinaria de Accionistas', fecha: '28/03/2025', estado: 'S',
     fecha_entrega_desde: '2025-03-01', fecha_entrega_hasta: '2025-03-31',
     fecha_cred_desde: '2025-03-01', fecha_cred_hasta: '2025-03-31'
   },
   {
-    id: 2, num: 'ASM-2025-02', tipo: 'E', descripcion: '',
+    id: 2, num: 'ASM-2025-02', tipo: 'E',
     ordinal: 'XXXI Asamblea General Extraordinaria de Accionistas', fecha: '15/04/2025', estado: 'S',
     fecha_entrega_desde: '2025-04-01', fecha_entrega_hasta: '2025-04-30',
     fecha_cred_desde: '2025-04-01', fecha_cred_hasta: '2025-04-30'
@@ -96,16 +96,19 @@ export const MOCK_NIVELES = [{ codigo: 'UNI', descripcion: 'Universitario' }, { 
 
 // ── Limitación Funcional ─────────────────────────────────────
 export const MOCK_LIMITACIONES_FUNCIONALES = [
+  { codigo: 'MOV', descripcion: 'Movilidad', activo: true },
   { codigo: 'AUD', descripcion: 'Auditiva', activo: true },
   { codigo: 'VIS', descripcion: 'Visual', activo: true },
-  { codigo: 'MOV', descripcion: 'Movilidad', activo: true },
   { codigo: 'HAB', descripcion: 'Habla', activo: true },
+  { codigo: 'PAR', descripcion: 'Parentezco', activo: true },
+  { codigo: 'ENF', descripcion: 'Parentezco de Enfermedades', activo: true },
 ];
 
 // Limitación funcional registrada para un accionista (puede ser null)
 export const MOCK_LIMITACION_ACCIONISTA = {
   codigo: 'ACC-005821',
   limitaciones: ['MOV', 'VIS', 'AUD'],  // múltiples limitaciones mockeadas
+  tipo_movilidad: 'Silla de Ruedas',
   observaciones: 'El accionista requiere asistencia para movilidad y cuenta con limitaciones visuales.',
   fecha_registro: '10/04/2026',
   usuario_registro: 'JLOPEZ',

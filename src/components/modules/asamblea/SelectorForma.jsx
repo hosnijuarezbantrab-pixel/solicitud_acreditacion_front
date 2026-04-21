@@ -53,11 +53,6 @@ export default function SelectorForma({ acc, asambleas = [], onClose }) {
   // ── Pantalla de selección ──
   return (
     <div>
-      <Alert type="info" style={{ marginBottom: 20 }}>
-        Seleccione las asambleas en las que desea acreditar al accionista.
-        Todas están marcadas por defecto — puede desmarcar las que no apliquen.
-        Se requiere al menos <strong>una</strong> para continuar.
-      </Alert>
 
       <SectionTitle icon="🏛️">
         Asambleas a Acreditar ({selected.length} / {asambleas.length})
@@ -78,9 +73,6 @@ export default function SelectorForma({ acc, asambleas = [], onClose }) {
               onKeyDown={e => (e.key === ' ' || e.key === 'Enter') && toggleAsm(a.id)}
             >
               <MiniCheck checked={isSel} />
-              <span className={[s.asmPill, a.tipo === 'O' ? s.pOrd : s.pExt].join(' ')}>
-                {a.descripcion}
-              </span>
               <div className={s.asmInfo}>
                 <div className={s.asmName}>{a.num} — {a.ordinal}</div>
                 <div className={s.asmDate}>📅 {a.fecha}</div>

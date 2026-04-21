@@ -688,9 +688,6 @@ export default function Expediente0080({ acc, asamblea, onClose }) {
     <div>
       {/* ── Cabecera de asamblea ── */}
       <div className={s.asmHdr}>
-        <span className={[s.asmPill, asamblea.tipo === 'O' ? s.pOrd : s.pExt].join(' ')}>
-          {asamblea.descripcion}
-        </span>
         <span className={s.asmTtl}>{asamblea.num} — {asamblea.ordinal}</span>
         <span className={s.asmDate}>📅 {asamblea.fecha}</span>
         <Tag color={estadoInfo.color}>{estadoInfo.label}</Tag>
